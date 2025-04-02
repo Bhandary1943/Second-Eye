@@ -319,175 +319,175 @@
 
 # # ..BOX multiple
 
-# import os
-# os.system("pip install mysql-connector-python==8.0.33")
-# import mysql.connector
+import os
+os.system("pip install mysql-connector-python==8.0.33")
+import mysql.connector
 
-# import streamlit as st
-# import mysql.connector
-# import requests
-# import face_recognition
-# import os
-# import pyttsx3
-# import threading
-# import cv2
-# import numpy as np
-# from PIL import Image
-# import io
+import streamlit as st
+import mysql.connector
+import requests
+import face_recognition
+import os
+import pyttsx3
+import threading
+import cv2
+import numpy as np
+from PIL import Image
+import io
 
-# # ESP32-CAM IP address
-# ESP32CAM_IP = "http://192.168.147.81/capture"
-# SAVE_PATH = "captured_image.jpg"
+# ESP32-CAM IP address
+ESP32CAM_IP = "http://192.168.147.81/capture"
+SAVE_PATH = "captured_image.jpg"
 
-# # Function to connect to the MySQL database
-# # def connect_db():
-# #     return mysql.connector.connect(
-# #         host="localhost",
-# #         user="root",
-# #         password="Indira@1943",
-# #         database="second_eye"
-# #     )
-
-# # Function to connect to the Clever Cloud MySQL database
+# Function to connect to the MySQL database
 # def connect_db():
 #     return mysql.connector.connect(
-#         host="b1fvdoqarhekhvzuhdcj-mysql.services.clever-cloud.com",
-#         user="uulwfabkmrk4gxk2",
-#         password="Indira@1943",  # Replace with your actual password
-#         database="b1fvdoqarhekhvzuhdcj",
-#         port=3306
+#         host="localhost",
+#         user="root",
+#         password="Indira@1943",
+#         database="second_eye"
 #     )
 
-# # Function to announce audio message in a separate thread
-# def announce(message):
-#     def speak():
-#         engine = pyttsx3.init()
-#         engine.say(message)
-#         engine.runAndWait()
+# Function to connect to the Clever Cloud MySQL database
+def connect_db():
+    return mysql.connector.connect(
+        host="b1fvdoqarhekhvzuhdcj-mysql.services.clever-cloud.com",
+        user="uulwfabkmrk4gxk2",
+        password="Indira@1943",  # Replace with your actual password
+        database="b1fvdoqarhekhvzuhdcj",
+        port=3306
+    )
+
+# Function to announce audio message in a separate thread
+def announce(message):
+    def speak():
+        engine = pyttsx3.init()
+        engine.say(message)
+        engine.runAndWait()
     
-#     thread = threading.Thread(target=speak)
-#     thread.start()
+    thread = threading.Thread(target=speak)
+    thread.start()
 
-# # Function to encode faces using face_recognition
-# def encode_faces(image):
-#     rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-#     face_locations = face_recognition.face_locations(rgb_image)
-#     face_encodings = face_recognition.face_encodings(rgb_image, face_locations)
-#     return face_encodings, face_locations  # Return encodings + bounding box locations
+# Function to encode faces using face_recognition
+def encode_faces(image):
+    rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    face_locations = face_recognition.face_locations(rgb_image)
+    face_encodings = face_recognition.face_encodings(rgb_image, face_locations)
+    return face_encodings, face_locations  # Return encodings + bounding box locations
 
-# # Function to recognize faces and return individual matches
-# def recognize_faces(captured_encodings):
-#     conn = connect_db()
-#     cursor = conn.cursor()
-#     cursor.execute("SELECT image_name, image_data FROM images")
-#     data = cursor.fetchall()
-#     cursor.close()
-#     conn.close()
+# Function to recognize faces and return individual matches
+def recognize_faces(captured_encodings):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT image_name, image_data FROM images")
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
 
-#     face_results = []
+    face_results = []
 
-#     for captured_encoding in captured_encodings:
-#         best_match = "Unknown"
-#         min_distance = 0.6
+    for captured_encoding in captured_encodings:
+        best_match = "Unknown"
+        min_distance = 0.6
 
-#         for image_name, image_blob in data:
-#             stored_image = np.array(Image.open(io.BytesIO(image_blob)))
-#             stored_encodings, _ = encode_faces(stored_image)
+        for image_name, image_blob in data:
+            stored_image = np.array(Image.open(io.BytesIO(image_blob)))
+            stored_encodings, _ = encode_faces(stored_image)
 
-#             for stored_encoding in stored_encodings:
-#                 distance = face_recognition.face_distance([stored_encoding], captured_encoding)[0]
-#                 if distance < min_distance:
-#                     min_distance = distance
-#                     best_match = image_name
+            for stored_encoding in stored_encodings:
+                distance = face_recognition.face_distance([stored_encoding], captured_encoding)[0]
+                if distance < min_distance:
+                    min_distance = distance
+                    best_match = image_name
         
-#         face_results.append(best_match if best_match != "Unknown" else "Unknown Face")
+        face_results.append(best_match if best_match != "Unknown" else "Unknown Face")
 
-#     return face_results
+    return face_results
 
-# # Function to draw bounding boxes and labels on image
-# def draw_bounding_boxes(image, face_locations, match_results):
-#     for (top, right, bottom, left), name in zip(face_locations, match_results):
-#         cv2.rectangle(image, (left, top), (right, bottom), (0, 255, 0), 2)  # Green box
-#         cv2.putText(image, name, (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-#     return image
+# Function to draw bounding boxes and labels on image
+def draw_bounding_boxes(image, face_locations, match_results):
+    for (top, right, bottom, left), name in zip(face_locations, match_results):
+        cv2.rectangle(image, (left, top), (right, bottom), (0, 255, 0), 2)  # Green box
+        cv2.putText(image, name, (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    return image
 
-# # Function to upload image to the database
-# def upload_image_to_db(image, image_name):
-#     conn = connect_db()
-#     cursor = conn.cursor()
-#     image_bytes = io.BytesIO()
-#     image.save(image_bytes, format='JPEG')
-#     image_data = image_bytes.getvalue()
+# Function to upload image to the database
+def upload_image_to_db(image, image_name):
+    conn = connect_db()
+    cursor = conn.cursor()
+    image_bytes = io.BytesIO()
+    image.save(image_bytes, format='JPEG')
+    image_data = image_bytes.getvalue()
     
-#     cursor.execute("INSERT INTO images (image_name, image_data) VALUES (%s, %s)", (image_name, image_data))
-#     conn.commit()
-#     cursor.close()
-#     conn.close()
+    cursor.execute("INSERT INTO images (image_name, image_data) VALUES (%s, %s)", (image_name, image_data))
+    conn.commit()
+    cursor.close()
+    conn.close()
 
-# # Streamlit UI
-# st.title("Second Eye - Image Recognition System 👁️👁️")
+# Streamlit UI
+st.title("Second Eye - Image Recognition System 👁️👁️")
 
-# page = st.sidebar.selectbox("Select Page", ["Home", "Supervisor", "User"])
+page = st.sidebar.selectbox("Select Page", ["Home", "Supervisor", "User"])
 
-# if page == "Home":
-#     st.subheader("Welcome to the Home Page")
+if page == "Home":
+    st.subheader("Welcome to the Home Page")
 
-#     response = requests.get(ESP32CAM_IP)
-#     if response.status_code == 200:
-#         with open(SAVE_PATH, "wb") as file:
-#             file.write(response.content)
+    response = requests.get(ESP32CAM_IP)
+    if response.status_code == 200:
+        with open(SAVE_PATH, "wb") as file:
+            file.write(response.content)
 
-#         captured_image = cv2.imread(SAVE_PATH)
-#         captured_encodings, face_locations = encode_faces(captured_image)
+        captured_image = cv2.imread(SAVE_PATH)
+        captured_encodings, face_locations = encode_faces(captured_image)
         
-#         if captured_encodings:
-#             match_results = recognize_faces(captured_encodings)
+        if captured_encodings:
+            match_results = recognize_faces(captured_encodings)
             
-#             # Draw bounding boxes with names
-#             processed_image = draw_bounding_boxes(captured_image, face_locations, match_results)
-#             processed_pil_image = Image.fromarray(cv2.cvtColor(processed_image, cv2.COLOR_BGR2RGB))
-#             st.image(processed_pil_image, caption="Processed Image with Matches", use_column_width=True)
+            # Draw bounding boxes with names
+            processed_image = draw_bounding_boxes(captured_image, face_locations, match_results)
+            processed_pil_image = Image.fromarray(cv2.cvtColor(processed_image, cv2.COLOR_BGR2RGB))
+            st.image(processed_pil_image, caption="Processed Image with Matches", use_column_width=True)
             
-#             for idx, name in enumerate(match_results, 1):
-#                 if name == "Unknown Face":
-#                     announce(f"Face {idx}: Not recognized")
-#                     st.warning(f"Face {idx}: Not recognized")
-#                 else:
-#                     announce(f"Face {idx}: Match found with {name}")
-#                     st.success(f"Face {idx}: Match found with {name}")
-#         else:
-#             captured_pil_image = Image.fromarray(cv2.cvtColor(captured_image, cv2.COLOR_BGR2RGB))
-#             st.image(captured_pil_image, caption="Captured Image (No Faces Detected)", use_column_width=True)
-#             announce("No face detected in captured image")
-#             st.warning("No face detected, but image displayed.")
+            for idx, name in enumerate(match_results, 1):
+                if name == "Unknown Face":
+                    announce(f"Face {idx}: Not recognized")
+                    st.warning(f"Face {idx}: Not recognized")
+                else:
+                    announce(f"Face {idx}: Match found with {name}")
+                    st.success(f"Face {idx}: Match found with {name}")
+        else:
+            captured_pil_image = Image.fromarray(cv2.cvtColor(captured_image, cv2.COLOR_BGR2RGB))
+            st.image(captured_pil_image, caption="Captured Image (No Faces Detected)", use_column_width=True)
+            announce("No face detected in captured image")
+            st.warning("No face detected, but image displayed.")
     
-#         os.remove(SAVE_PATH)
-#     else:
-#         st.error("Failed to capture image")
-#         announce("Failed to capture image")
+        os.remove(SAVE_PATH)
+    else:
+        st.error("Failed to capture image")
+        announce("Failed to capture image")
 
-# elif page == "Supervisor":
-#     st.subheader("Upload Image")
-#     uploaded_image = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"])
-#     image_name = st.text_input("Enter Image Name")
+elif page == "Supervisor":
+    st.subheader("Upload Image")
+    uploaded_image = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"])
+    image_name = st.text_input("Enter Image Name")
 
-#     if st.button("Upload") and uploaded_image and image_name:
-#         image = Image.open(uploaded_image)
-#         upload_image_to_db(image, image_name)
-#         st.success("Image uploaded successfully!")
+    if st.button("Upload") and uploaded_image and image_name:
+        image = Image.open(uploaded_image)
+        upload_image_to_db(image, image_name)
+        st.success("Image uploaded successfully!")
 
-# elif page == "User":
-#     st.subheader("Retrieve Images")
-#     conn = connect_db()
-#     cursor = conn.cursor()
-#     cursor.execute("SELECT image_name, image_data FROM images")
-#     images_data = cursor.fetchall()
-#     cursor.close()
-#     conn.close()
+elif page == "User":
+    st.subheader("Retrieve Images")
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT image_name, image_data FROM images")
+    images_data = cursor.fetchall()
+    cursor.close()
+    conn.close()
 
-#     for image_name, image_blob in images_data:
-#         image = Image.open(io.BytesIO(image_blob))
-#         st.image(image, caption=image_name, use_column_width=True)
+    for image_name, image_blob in images_data:
+        image = Image.open(io.BytesIO(image_blob))
+        st.image(image, caption=image_name, use_column_width=True)
 
 
 
