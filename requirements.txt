@@ -2,10 +2,10 @@ streamlit
 mysql-connector-python==8.0.33
 requests
 face-recognition
-opencv-python-headless  # ✅ Prevents GUI-related errors
+opencv-python-headless
 numpy
 pillow
 pyttsx3
 cmake
 dlib
-tqdm  # ✅ Fixes potential face-recognition dependency issue
+tqdm
