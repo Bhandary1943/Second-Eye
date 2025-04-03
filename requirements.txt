@@ -9,3 +9,4 @@ pyttsx3
 cmake
 tqdm
 deepface
+tf-keras
