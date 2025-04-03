@@ -321,7 +321,7 @@
 
 import os
 import streamlit as st
-import pymysql
+import mysql.connector
 import requests
 import face_recognition
 import os
@@ -346,24 +346,15 @@ SAVE_PATH = "captured_image.jpg"
 #     )
 
 # Function to connect to the Clever Cloud MySQL database
-# def connect_db():
-#     return mysql.connector.connect(
-#         host="b1fvdoqarhekhvzuhdcj-mysql.services.clever-cloud.com",
-#         user="uulwfabkmrk4gxk2",
-#         password="Indira@1943",  # Replace with your actual password
-#         database="b1fvdoqarhekhvzuhdcj",
-#         port=3306
-#     )
-
 def connect_db():
-    return pymysql.connect(
+    return mysql.connector.connect(
         host="b1fvdoqarhekhvzuhdcj-mysql.services.clever-cloud.com",
         user="uulwfabkmrk4gxk2",
-        password="Indira@1943",
+        password="Indira@1943",  # Replace with your actual password
         database="b1fvdoqarhekhvzuhdcj",
         port=3306
     )
-
+    
 # Function to announce audio message in a separate thread
 def announce(message):
     def speak():
