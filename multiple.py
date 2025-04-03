@@ -1057,7 +1057,7 @@ def connect_db():
         host="b1fvdoqarhekhvzuhdcj-mysql.services.clever-cloud.com",  # ✅ Clever Cloud host
         user="uulwfabkmrk4gxk2",
         password="raD83QmPrQNbBRFHvRj7",  # ✅ Use correct password
-        database="b1fvdoqarhekhvzuhdcj",  # ✅ Use correct DB name
+        database="second_eye",  # ✅ Use correct DB name
         port=3306
     )
 
