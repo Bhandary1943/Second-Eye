@@ -961,11 +961,12 @@ ESP32CAM_IP = "http://192.168.147.81/capture"
 SAVE_PATH = "captured_image.jpg"
 
 # Function to connect to the Clever Cloud MySQL database
+# Function to connect to the Clever Cloud MySQL database
 def connect_db():
     return mysql.connector.connect(
         host="b1fvdoqarhekhvzuhdcj-mysql.services.clever-cloud.com",
         user="uulwfabkmrk4gxk2",
-        password="Indira@1943",  # Replace with your actual password
+        password="raD83QmPrQNbBRFHvRj7",  # Updated password
         database="b1fvdoqarhekhvzuhdcj",
         port=3306
     )
