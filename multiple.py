@@ -962,13 +962,20 @@ SAVE_PATH = "captured_image.jpg"
 
 # Function to connect to the Clever Cloud MySQL database
 # Function to connect to the Clever Cloud MySQL database
+# def connect_db():
+#     return mysql.connector.connect(
+#         host="b1fvdoqarhekhvzuhdcj-mysql.services.clever-cloud.com",
+#         user="uulwfabkmrk4gxk2",
+#         password="raD83QmPrQNbBRFHvRj7",  # Updated password
+#         database="b1fvdoqarhekhvzuhdcj",
+#         port=3306
+#     )
 def connect_db():
     return mysql.connector.connect(
-        host="b1fvdoqarhekhvzuhdcj-mysql.services.clever-cloud.com",
-        user="uulwfabkmrk4gxk2",
-        password="raD83QmPrQNbBRFHvRj7",  # Updated password
-        database="b1fvdoqarhekhvzuhdcj",
-        port=3306
+        host="localhost",
+        user="root",
+        password="Indira@1943",
+        database="second_eye"
     )
 
 # Function to announce audio message in a separate thread
