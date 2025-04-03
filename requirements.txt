@@ -2,7 +2,7 @@ streamlit
 mysql-connector-python
 pymysql
 requests
-opencv-python-headless
+opencv-contrib-python-headless
 numpy
 pillow
 pyttsx3
