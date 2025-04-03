@@ -1,6 +1,6 @@
 streamlit
 requests
-face-recognition
+face_recognition
 opencv-python-headless
 numpy
 pillow
@@ -8,4 +8,4 @@ pyttsx3
 cmake
 dlib
 tqdm
-pymysql   # Add this line
+pymysql
