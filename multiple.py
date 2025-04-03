@@ -320,11 +320,8 @@
 # # ..BOX multiple
 
 import os
-os.system("pip install mysql-connector-python==8.0.33")
-import mysql.connector
-
 import streamlit as st
-import mysql.connector
+import pymysql
 import requests
 import face_recognition
 import os
@@ -349,11 +346,20 @@ SAVE_PATH = "captured_image.jpg"
 #     )
 
 # Function to connect to the Clever Cloud MySQL database
+# def connect_db():
+#     return mysql.connector.connect(
+#         host="b1fvdoqarhekhvzuhdcj-mysql.services.clever-cloud.com",
+#         user="uulwfabkmrk4gxk2",
+#         password="Indira@1943",  # Replace with your actual password
+#         database="b1fvdoqarhekhvzuhdcj",
+#         port=3306
+#     )
+
 def connect_db():
-    return mysql.connector.connect(
+    return pymysql.connect(
         host="b1fvdoqarhekhvzuhdcj-mysql.services.clever-cloud.com",
         user="uulwfabkmrk4gxk2",
-        password="Indira@1943",  # Replace with your actual password
+        password="Indira@1943",
         database="b1fvdoqarhekhvzuhdcj",
         port=3306
     )
