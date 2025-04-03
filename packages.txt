@@ -5,5 +5,5 @@ libglib2.0-0
 libsm6
 libxext6
 libxrender1
-libopenblas-dev  # Add this
-liblapack-dev  # Add this
+libopenblas-dev  
+liblapack-dev  
