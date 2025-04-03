@@ -1,6 +1,7 @@
 streamlit
+mysql-connector-python==8.0.33
 requests
-face_recognition
+face-recognition
 opencv-python-headless
 numpy
 pillow
@@ -8,4 +9,3 @@ pyttsx3
 cmake
 dlib
 tqdm
-pymysql
