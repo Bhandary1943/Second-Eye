@@ -5,7 +5,7 @@ from PIL import Image
 import os
 from gtts import gTTS
 
-KNOWN_FOLDER = "reference_images"
+KNOWN_FOLDER = "known_faces"
 SERVER_URL = "https://esp32-upload-server.onrender.com"
 
 def get_latest_image():
