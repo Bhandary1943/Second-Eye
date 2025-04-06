@@ -130,26 +130,24 @@ def get_latest_image():
     return image_url
 
 def compare_with_known_faces(unknown_img_path):
-    best_match = None
-    best_distance = 1.0  # initialize with max distance
-    for filename in os.listdir(KNOWN_FOLDER):
-        known_img_path = os.path.join(KNOWN_FOLDER, filename)
-        try:
-            result = DeepFace.verify(
-                img1_path=unknown_img_path,
-                img2_path=known_img_path,
-                enforce_detection=True
-            )
-            distance = result['distance']
-            verified = result['verified']
-            print(f"Compared with {filename}: Verified={verified}, Distance={distance}")
-
-            if verified and distance < best_distance:
-                best_distance = distance
-                best_match = filename.split('.')[0]
-        except Exception as e:
-            print(f"❌ Error comparing with {filename}: {e}")
-    return best_match
+    try:
+        result = DeepFace.find(
+            img_path=unknown_img_path,
+            db_path=KNOWN_FOLDER,
+            enforce_detection=True,
+            model_name='VGG-Face',  # or 'Facenet' if you prefer
+            distance_metric='cosine'
+        )
+        if len(result[0]) > 0:
+            top_match = result[0].iloc[0]
+            print("🔍 Top match:", top_match["identity"], "| Distance:", top_match["distance"])
+            match_name = os.path.basename(top_match["identity"]).split(".")[0]
+            return match_name
+        else:
+            return None
+    except Exception as e:
+        print("❌ Face comparison error:", e)
+        return None
 
 st.title("🔍 ESP32-CAM Face Recognition with DeepFace")
 
