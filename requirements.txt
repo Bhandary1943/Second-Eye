@@ -1,0 +1,13 @@
+streamlit
+mysql-connector-python
+pymysql
+requests
+opencv-contrib-python-headless
+numpy
+pillow
+pyttsx3
+cmake
+tqdm
+deepface
+tf-keras
+tensorflow==2.12.0
