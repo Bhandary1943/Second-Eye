@@ -137,16 +137,16 @@ def compare_with_known_faces(unknown_img_path):
         result = DeepFace.find(
             img_path=unknown_img_path,
             db_path=KNOWN_FOLDER,
-            model_name='Facenet512',  # More accurate model
+            model_name='Facenet512',
             distance_metric='cosine',
-            enforce_detection=True
+            enforce_detection=False  # 🔁 changed from True to False
         )
         if len(result) > 0 and len(result[0]) > 0:
             top_match = result[0].iloc[0]
             distance = top_match["distance"]
             print("Top match:", top_match["identity"], "| Distance:", distance)
 
-            if distance < 0.3:  # Make threshold stricter
+            if distance < 0.35:  # Loosen threshold a little
                 return os.path.basename(top_match["identity"]).split(".")[0]
         return None
     except Exception as e:
