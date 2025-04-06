@@ -11,3 +11,4 @@ tqdm
 deepface
 tf-keras
 tensorflow==2.12.0
+flask
