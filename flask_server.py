@@ -13,16 +13,25 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def home():
     return "ESP32-CAM Upload Server is running"
 
-@app.route('/upload', methods=['POST'])
-def upload_image():
-    if 'image' not in request.files:
-        return jsonify({"error": "No image uploaded"}), 400
+@app.route("/upload", methods=["POST"])
+def upload():
+    try:
+        if not request.data:
+            return jsonify({"error": "No image uploaded"}), 400
 
-    image = request.files['image']
-    filename = datetime.now().strftime("%Y%m%d_%H%M%S.jpg")
-    path = os.path.join(UPLOAD_FOLDER, filename)
-    image.save(path)
-    return jsonify({"message": "Image uploaded", "filename": filename}), 200
+        now = datetime.now().strftime("%Y%m%d%H%M%S")
+        filename = f"{now}.jpg"
+        filepath = os.path.join("uploads", filename)
+
+        with open(filepath, "wb") as f:
+            f.write(request.data)
+
+        print(f"✅ Image saved: {filename}")
+        return jsonify({"status": "success", "filename": filename}), 200
+
+    except Exception as e:
+        print("❌ Upload error:", e)
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/latest', methods=['GET'])
 def latest_image():
