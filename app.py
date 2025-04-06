@@ -118,11 +118,9 @@ from PIL import Image
 from gtts import gTTS
 import os
 
-# === Config ===
 KNOWN_FOLDER = "known_faces"
 SERVER_URL = "https://esp32-upload-server.onrender.com"
 
-# === Get latest image uploaded by ESP32 ===
 def get_latest_image():
     try:
         r = requests.get(f"{SERVER_URL}/latest", timeout=5)
@@ -134,40 +132,52 @@ def get_latest_image():
         print("Error fetching image:", e)
         return None
 
-# === DeepFace Matching ===
+def test_face_detection(img_path):
+    try:
+        analysis = DeepFace.analyze(
+            img_path=img_path,
+            actions=['emotion'],  # force face detection
+            enforce_detection=False
+        )
+        print("Detection success:", analysis)
+        return True
+    except Exception as e:
+        print("Face not detected:", e)
+        return False
+
 def compare_with_known_faces(unknown_img_path):
     try:
         result = DeepFace.find(
             img_path=unknown_img_path,
             db_path=KNOWN_FOLDER,
-            model_name='Facenet',  # ✅ Changed from Facenet512 for better tolerance
+            model_name='Facenet512',
             distance_metric='cosine',
-            enforce_detection=False  # ✅ Accept blurry or partially visible faces
+            enforce_detection=False  # allow weak ESP32-CAM images
         )
         if len(result) > 0 and len(result[0]) > 0:
             top_match = result[0].iloc[0]
             distance = top_match["distance"]
             print("Top match:", top_match["identity"], "| Distance:", distance)
 
-            if distance < 0.45:  # ✅ Loosened threshold for ESP32 images
+            if distance < 0.35:  # Looser threshold
                 return os.path.basename(top_match["identity"]).split(".")[0]
         return None
     except Exception as e:
         print("DeepFace error:", e)
         return None
 
-# === Streamlit UI ===
+# Streamlit UI
 st.title("🔍 ESP32-CAM Face Recognition with DeepFace")
 
 if st.button("📸 Check for New Image"):
     image_url = get_latest_image()
     if image_url:
         st.image(image_url, caption="Captured Image", use_column_width=True)
-        try:
-            response = requests.get(image_url)
-            with open("latest.jpg", "wb") as f:
-                f.write(response.content)
+        response = requests.get(image_url)
+        with open("latest.jpg", "wb") as f:
+            f.write(response.content)
 
+        if test_face_detection("latest.jpg"):
             match = compare_with_known_faces("latest.jpg")
             if match:
                 st.success(f"✅ Match found: {match}")
@@ -175,12 +185,14 @@ if st.button("📸 Check for New Image"):
             else:
                 st.error("❌ No accurate match found")
                 tts = gTTS("No accurate match found")
-
-            tts.save("result.mp3")
-            st.audio("result.mp3", autoplay=True)
-        except Exception as e:
-            st.error(f"⚠️ Error handling image: {e}")
+        else:
+            st.error("❌ No face detected in the image. Please try again with better lighting or camera angle.")
+            tts = gTTS("No face detected in the image. Please try again.")
+        
+        tts.save("result.mp3")
+        st.audio("result.mp3", autoplay=True)
     else:
         st.warning("⚠️ No image found on the server.")
+
 
 
