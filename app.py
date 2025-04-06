@@ -122,31 +122,35 @@ KNOWN_FOLDER = "known_faces"
 SERVER_URL = "https://esp32-upload-server.onrender.com"
 
 def get_latest_image():
-    r = requests.get(f"{SERVER_URL}/latest")
-    if r.status_code != 200:
+    try:
+        r = requests.get(f"{SERVER_URL}/latest", timeout=5)
+        if r.status_code != 200:
+            return None
+        filename = r.json()["filename"]
+        return f"{SERVER_URL}/uploads/{filename}"
+    except Exception as e:
+        print("Error fetching image:", e)
         return None
-    filename = r.json()["filename"]
-    image_url = f"{SERVER_URL}/uploads/{filename}"
-    return image_url
 
 def compare_with_known_faces(unknown_img_path):
     try:
         result = DeepFace.find(
             img_path=unknown_img_path,
             db_path=KNOWN_FOLDER,
-            enforce_detection=True,
-            model_name='VGG-Face',  # or 'Facenet' if you prefer
-            distance_metric='cosine'
+            model_name='Facenet512',  # More accurate model
+            distance_metric='cosine',
+            enforce_detection=True
         )
-        if len(result[0]) > 0:
+        if len(result) > 0 and len(result[0]) > 0:
             top_match = result[0].iloc[0]
-            print("🔍 Top match:", top_match["identity"], "| Distance:", top_match["distance"])
-            match_name = os.path.basename(top_match["identity"]).split(".")[0]
-            return match_name
-        else:
-            return None
+            distance = top_match["distance"]
+            print("Top match:", top_match["identity"], "| Distance:", distance)
+
+            if distance < 0.3:  # Make threshold stricter
+                return os.path.basename(top_match["identity"]).split(".")[0]
+        return None
     except Exception as e:
-        print("❌ Face comparison error:", e)
+        print("DeepFace error:", e)
         return None
 
 st.title("🔍 ESP32-CAM Face Recognition with DeepFace")
@@ -154,7 +158,7 @@ st.title("🔍 ESP32-CAM Face Recognition with DeepFace")
 if st.button("📸 Check for New Image"):
     image_url = get_latest_image()
     if image_url:
-        st.image(image_url, caption="📷 Captured Image", use_column_width=True)
+        st.image(image_url, caption="Captured Image", use_column_width=True)
         response = requests.get(image_url)
         with open("latest.jpg", "wb") as f:
             f.write(response.content)
@@ -164,9 +168,10 @@ if st.button("📸 Check for New Image"):
             st.success(f"✅ Match found: {match}")
             tts = gTTS(f"Match found: {match}")
         else:
-            st.error("❌ No match found or face not clearly visible")
-            tts = gTTS("No match found")
+            st.error("❌ No accurate match found")
+            tts = gTTS("No accurate match found")
         tts.save("result.mp3")
         st.audio("result.mp3", autoplay=True)
     else:
         st.warning("⚠️ No image found on the server.")
+
