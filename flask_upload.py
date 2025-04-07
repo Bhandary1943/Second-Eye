@@ -60,21 +60,24 @@ def upload_to_github(filename, file_path):
     response = requests.put(api_url, headers=headers, json=data)
     return response.status_code == 201
 
-@app.route("/upload-known", methods=["POST"])
-def upload_known():
-    if "image" not in request.files:
-        return jsonify({"error": "No image uploaded"}), 400
+@app.route("/upload", methods=["POST"])
+def upload_file():
+    if "file" not in request.files:
+        return "No file part", 400
 
-    image = request.files["image"]
-    filename = image.filename
-    save_path = os.path.join("/tmp", filename)
-    image.save(save_path)
+    file = request.files["file"]
+    if file.filename == "":
+        return "No selected file", 400
 
-    success = upload_to_github(filename, save_path)
-    os.remove(save_path)
+    filename = secure_filename(file.filename)
+    file_path = os.path.join("uploads", filename)
+    file.save(file_path)
 
+    # Upload to GitHub logic
+    success = upload_to_github(filename, file_path)
     if success:
-        return jsonify({"message": "Image uploaded successfully"}), 200
+        return "File uploaded successfully", 201
     else:
-        return jsonify({"error": "Failed to upload image"}), 500
+        return "GitHub upload failed", 500
+
 
