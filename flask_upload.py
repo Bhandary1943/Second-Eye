@@ -28,17 +28,18 @@
 #     return response.status_code == 201
 
 
+from flask import Flask, request
+from werkzeug.utils import secure_filename
 import os
 import requests
-from flask import Flask, request, jsonify
 from base64 import b64encode
 
-# 👇 Make sure your GitHub PAT is stored in Streamlit/Render secrets as GITHUB_TOKEN
+app = Flask(__name__)
+
+# GitHub setup
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 REPO_NAME = "Bhandary1943/Second-Eye"
 FOLDER = "known_faces"
-
-app = Flask(__name__)  # ✅ This is what Render looks for
 
 def upload_to_github(filename, file_path):
     with open(file_path, "rb") as f:
@@ -46,14 +47,12 @@ def upload_to_github(filename, file_path):
     content_base64 = b64encode(content).decode()
 
     api_url = f"https://api.github.com/repos/{REPO_NAME}/contents/{FOLDER}/{filename}"
-
     headers = {
         "Authorization": f"token {GITHUB_TOKEN}",
         "Accept": "application/vnd.github+json"
     }
-
     data = {
-        "message": f"Add {filename}",
+        "message": f"Upload {filename}",
         "content": content_base64
     }
 
@@ -70,14 +69,21 @@ def upload_file():
         return "No selected file", 400
 
     filename = secure_filename(file.filename)
-    file_path = os.path.join("uploads", filename)
-    file.save(file_path)
+    filepath = os.path.join("uploads", filename)
+    os.makedirs("uploads", exist_ok=True)
+    file.save(filepath)
 
-    # Upload to GitHub logic
-    success = upload_to_github(filename, file_path)
-    if success:
-        return "File uploaded successfully", 201
+    if upload_to_github(filename, filepath):
+        return "File uploaded to GitHub", 201
     else:
         return "GitHub upload failed", 500
+
+@app.route("/", methods=["GET"])
+def home():
+    return "Flask upload server is running ✅", 200
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
 
 
