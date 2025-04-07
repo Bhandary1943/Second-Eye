@@ -13,3 +13,4 @@ tf-keras
 tensorflow==2.12.0
 flask
 gTTS
+mtcnn
