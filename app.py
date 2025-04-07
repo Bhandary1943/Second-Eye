@@ -166,7 +166,7 @@ if page == "Face Recognition":
     if st.button("Check for New Image"):
         image_url = get_latest_image()
         if image_url:
-            st.image(image_url, caption="Captured Image")
+            st.image(image_url, caption="Captured Image", use_container_width=True)
             response = requests.get(image_url)
             with open("latest.jpg", "wb") as f:
                 f.write(response.content)
@@ -194,20 +194,24 @@ elif page == "Upload Known Face":
 
     uploaded_file = st.file_uploader("Choose an image", type=["jpg", "jpeg", "png"])
     if uploaded_file is not None:
-        st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
+        st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
 
         if st.button("Upload to GitHub"):
             try:
                 files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
                 response = requests.post(FLASK_UPLOAD_URL, files=files, timeout=20)
+
                 if response.status_code == 201:
                     st.success("✅ Image uploaded to GitHub successfully.")
+                elif response.status_code == 200:
+                    st.info("ℹ️ Image already existed or was updated on GitHub.")
                 else:
-                    st.error(f"❌ Upload failed: {response.status_code} - {response.text}")
+                    st.error(f"❌ Upload failed. Status code: {response.status_code}\n{response.text}")
             except requests.exceptions.ChunkedEncodingError:
                 st.error("⚠️ Upload failed due to network or encoding error. Try again or use a smaller image.")
             except requests.exceptions.RequestException as e:
                 st.error(f"⚠️ Upload failed: {str(e)}")
+
 
 
 
