@@ -181,80 +181,78 @@
 import streamlit as st
 import face_recognition
 import requests
-from PIL import Image
-from gtts import gTTS
 import os
+from gtts import gTTS
 
-KNOWN_FOLDER = "known_faces"  # Folder with known faces
-SERVER_URL = "https://esp32-upload-server.onrender.com"  # ESP32-CAM upload server
+# Folder where known/reference images are stored
+REFERENCE_FOLDER = "known_faces"
+# ESP32-CAM image server
+SERVER_URL = "https://esp32-upload-server.onrender.com"
+SAVE_PATH = "latest.jpg"
 
 def get_latest_image():
     try:
-        r = requests.get(f"{SERVER_URL}/latest", timeout=5)
+        r = requests.get(f"{SERVER_URL}/latest", timeout=10)
         if r.status_code != 200:
             return None
         filename = r.json()["filename"]
         image_url = f"{SERVER_URL}/uploads/{filename}"
         return image_url
     except Exception as e:
-        st.error(f"Error getting latest image: {e}")
+        print("Error getting latest image:", e)
         return None
 
-def compare_with_known_faces(unknown_img_path):
+def compare_faces(image1_path, image2_path):
     try:
-        unknown_image = face_recognition.load_image_file(unknown_img_path)
-        unknown_encodings = face_recognition.face_encodings(unknown_image)
-        if not unknown_encodings:
-            return None  # No face found
-        unknown_encoding = unknown_encodings[0]
+        img1 = face_recognition.load_image_file(image1_path)
+        img2 = face_recognition.load_image_file(image2_path)
 
-        for filename in os.listdir(KNOWN_FOLDER):
-            known_img_path = os.path.join(KNOWN_FOLDER, filename)
-            known_image = face_recognition.load_image_file(known_img_path)
-            known_encodings = face_recognition.face_encodings(known_image)
-            if not known_encodings:
-                continue  # Skip if no face in known image
-            match = face_recognition.compare_faces([known_encodings[0]], unknown_encoding)
-            if match[0]:
-                return os.path.splitext(filename)[0]  # Return name (without extension)
-        return None
+        encodings1 = face_recognition.face_encodings(img1)
+        encodings2 = face_recognition.face_encodings(img2)
+
+        if encodings1 and encodings2:
+            result = face_recognition.compare_faces([encodings1[0]], encodings2[0])
+            return result[0]
+        else:
+            print("No faces found in one of the images.")
+            return False
     except Exception as e:
-        st.error(f"Face comparison error: {e}")
-        return None
+        print("Comparison error:", e)
+        return False
 
-def speak(text):
-    tts = gTTS(text)
+def speak(message):
+    tts = gTTS(message)
     tts.save("result.mp3")
     st.audio("result.mp3", autoplay=True)
 
-st.title("📸 ESP32-CAM Face Recognition (using face_recognition)")
+# Streamlit UI
+st.title("🔍 ESP32-CAM Face Recognition (with face_recognition)")
 
-if st.button("Check for New Image"):
+if st.button("📸 Check for New Image"):
     image_url = get_latest_image()
     if image_url:
-        st.image(image_url, caption="Captured Image")
+        st.image(image_url, caption="Captured Image", use_column_width=True)
+        response = requests.get(image_url)
+        with open(SAVE_PATH, "wb") as f:
+            f.write(response.content)
 
-        # Download image
-        try:
-            response = requests.get(image_url, timeout=5)
-            with open("latest.jpg", "wb") as f:
-                f.write(response.content)
-        except Exception as e:
-            st.error(f"Image download failed: {e}")
-            st.stop()
+        match_found = False
+        for ref_file in os.listdir(REFERENCE_FOLDER):
+            ref_path = os.path.join(REFERENCE_FOLDER, ref_file)
+            if compare_faces(SAVE_PATH, ref_path):
+                name = os.path.splitext(ref_file)[0]
+                message = f"Match found with {name}"
+                st.success(f"✅ {message}")
+                speak(message)
+                match_found = True
+                break
 
-        # Compare with known faces
-        match = compare_with_known_faces("latest.jpg")
-        if match:
-            st.success(f"✅ Match found: {match}")
-            speak(f"Match found with {match}")
-        else:
+        if not match_found:
+            message = "No match found"
             st.error("❌ No match found")
-            speak("No match found")
-
-        # Optional: delete downloaded image
-        os.remove("latest.jpg")
+            speak(message)
     else:
-        st.warning("⚠️ No image found on server.")
+        st.warning("⚠️ No image found on the server.")
+
 
 
