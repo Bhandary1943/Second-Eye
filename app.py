@@ -159,7 +159,7 @@ def compare_with_known_faces(unknown_img_path):
             print(f"No face detected or comparison failed with {filename}: {e}")
     return None
 
-# Face Recognition Page
+# -------------------- PAGE 1: Face Recognition --------------------
 if page == "Face Recognition":
     st.title("ESP32-CAM Face Recognition with DeepFace")
 
@@ -188,7 +188,7 @@ if page == "Face Recognition":
         else:
             st.warning("No image found on server.")
 
-# Upload Known Face Page
+# -------------------- PAGE 2: Upload Known Face --------------------
 elif page == "Upload Known Face":
     st.title("Upload New Known Face")
 
@@ -198,19 +198,21 @@ elif page == "Upload Known Face":
 
         if st.button("Upload to GitHub"):
             try:
-                files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
+                # Sanitize filename to avoid GitHub upload errors
+                safe_filename = uploaded_file.name.replace(" ", "_")
+                files = {"file": (safe_filename, uploaded_file.getvalue())}
+
                 response = requests.post(FLASK_UPLOAD_URL, files=files, timeout=20)
 
                 if response.status_code == 201:
                     st.success("✅ Image uploaded to GitHub successfully.")
-                elif response.status_code == 200:
-                    st.info("ℹ️ Image already existed or was updated on GitHub.")
                 else:
                     st.error(f"❌ Upload failed. Status code: {response.status_code}\n{response.text}")
             except requests.exceptions.ChunkedEncodingError:
                 st.error("⚠️ Upload failed due to network or encoding error. Try again or use a smaller image.")
             except requests.exceptions.RequestException as e:
                 st.error(f"⚠️ Upload failed: {str(e)}")
+
 
 
 
