@@ -189,29 +189,36 @@ if page == "Face Recognition":
             st.warning("No image found on server.")
 
 # -------------------- PAGE 2: Upload Known Face --------------------
+# Upload Known Face Page
 elif page == "Upload Known Face":
     st.title("Upload New Known Face")
+    MAX_FILE_SIZE_MB = 3
+    MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 
     uploaded_file = st.file_uploader("Choose an image", type=["jpg", "jpeg", "png"])
     if uploaded_file is not None:
         st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
 
         if st.button("Upload to GitHub"):
-            try:
-                # Sanitize filename to avoid GitHub upload errors
-                safe_filename = uploaded_file.name.replace(" ", "_")
-                files = {"file": (safe_filename, uploaded_file.getvalue())}
+            file_data = uploaded_file.getvalue()
 
-                response = requests.post(FLASK_UPLOAD_URL, files=files, timeout=20)
+            if len(file_data) > MAX_FILE_SIZE_BYTES:
+                st.error(f"❌ File too large. Please upload a file under {MAX_FILE_SIZE_MB} MB.")
+            else:
+                try:
+                    safe_filename = uploaded_file.name.replace(" ", "_")
+                    files = {"file": (safe_filename, file_data)}
+                    response = requests.post(FLASK_UPLOAD_URL, files=files, timeout=30)
 
-                if response.status_code == 201:
-                    st.success("✅ Image uploaded to GitHub successfully.")
-                else:
-                    st.error(f"❌ Upload failed. Status code: {response.status_code}\n{response.text}")
-            except requests.exceptions.ChunkedEncodingError:
-                st.error("⚠️ Upload failed due to network or encoding error. Try again or use a smaller image.")
-            except requests.exceptions.RequestException as e:
-                st.error(f"⚠️ Upload failed: {str(e)}")
+                    if response.status_code == 201:
+                        st.success("✅ Image uploaded to GitHub successfully.")
+                    else:
+                        st.error(f"❌ Upload failed. Status code: {response.status_code}\n{response.text}")
+                except requests.exceptions.ChunkedEncodingError:
+                    st.error("⚠️ Upload failed due to network or encoding error. Try again or use a smaller image.")
+                except requests.exceptions.RequestException as e:
+                    st.error(f"⚠️ Upload failed: {str(e)}")
+
 
 
 
