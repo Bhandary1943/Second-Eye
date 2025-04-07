@@ -16,3 +16,4 @@ gTTS
 mtcnn
 python-dotenv
 PyGithub
+gunicorn
