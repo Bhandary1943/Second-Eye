@@ -115,7 +115,6 @@
 #         st.warning("No image found on server.")
 
 
-
 import streamlit as st
 from deepface import DeepFace
 import requests
@@ -124,21 +123,23 @@ from gtts import gTTS
 import os
 
 KNOWN_FOLDER = "known_faces"
-SERVER_URL = "https://esp32-upload-server.onrender.com"
-FLASK_UPLOAD_URL = "https://flask-upload-pzch.onrender.com/upload"  # Your Flask server that uploads to GitHub
+ESP32_SERVER_URL = "https://esp32-upload-server.onrender.com"
+FLASK_UPLOAD_URL = "https://flask-upload-pzch.onrender.com/upload"
 
-# ---------------- Page Navigation ----------------
-page = st.sidebar.radio("Go to", ["Compare Captured Image", "Upload Known Face"])
+# Page Navigation
+st.sidebar.title("Navigation")
+page = st.sidebar.radio("Go to", ["Face Recognition", "Upload Known Face"])
 
-# ----------------- Shared Functions ----------------
+# Function to get latest image from ESP32 server
 def get_latest_image():
-    r = requests.get(f"{SERVER_URL}/latest")
+    r = requests.get(f"{ESP32_SERVER_URL}/latest")
     if r.status_code != 200:
         return None
     filename = r.json()["filename"]
-    image_url = f"{SERVER_URL}/uploads/{filename}"
+    image_url = f"{ESP32_SERVER_URL}/uploads/{filename}"
     return image_url
 
+# Function to check if face is detected
 def is_face_detected(image_path):
     try:
         faces = DeepFace.extract_faces(img_path=image_path, enforce_detection=True)
@@ -146,6 +147,7 @@ def is_face_detected(image_path):
     except:
         return False
 
+# Function to compare image with known faces
 def compare_with_known_faces(unknown_img_path):
     for filename in os.listdir(KNOWN_FOLDER):
         known_img_path = os.path.join(KNOWN_FOLDER, filename)
@@ -157,8 +159,8 @@ def compare_with_known_faces(unknown_img_path):
             print(f"No face detected or comparison failed with {filename}: {e}")
     return None
 
-# ----------------- Page 1: Face Comparison ----------------
-if page == "Compare Captured Image":
+# Face Recognition Page
+if page == "Face Recognition":
     st.title("ESP32-CAM Face Recognition with DeepFace")
 
     if st.button("Check for New Image"):
@@ -180,27 +182,33 @@ if page == "Compare Captured Image":
             else:
                 st.warning("😕 No face detected in the captured image.")
                 tts = gTTS("No face detected")
+
             tts.save("result.mp3")
             st.audio("result.mp3", autoplay=True)
         else:
             st.warning("No image found on server.")
 
-# ----------------- Page 2: Upload Known Face ----------------
+# Upload Known Face Page
 elif page == "Upload Known Face":
-    st.title("Upload Known Face to GitHub via Flask")
+    st.title("Upload New Known Face")
 
-    uploaded_file = st.file_uploader("Choose an image to upload as known face", type=["jpg", "jpeg", "png"])
-
+    uploaded_file = st.file_uploader("Choose an image", type=["jpg", "jpeg", "png"])
     if uploaded_file is not None:
-        st.image(uploaded_file, caption="Selected Image", use_column_width=True)
+        st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
 
         if st.button("Upload to GitHub"):
-            response = requests.post(FLASK_UPLOAD_URL, files={"file": (uploaded_file.name, uploaded_file.getvalue())})
+            try:
+                files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
+                response = requests.post(FLASK_UPLOAD_URL, files=files, timeout=20)
+                if response.status_code == 201:
+                    st.success("✅ Image uploaded to GitHub successfully.")
+                else:
+                    st.error(f"❌ Upload failed: {response.status_code} - {response.text}")
+            except requests.exceptions.ChunkedEncodingError:
+                st.error("⚠️ Upload failed due to network or encoding error. Try again or use a smaller image.")
+            except requests.exceptions.RequestException as e:
+                st.error(f"⚠️ Upload failed: {str(e)}")
 
-            if response.status_code == 200:
-                st.success("✅ Image uploaded successfully to GitHub!")
-            else:
-                st.error(f"❌ Upload failed. Status code: {response.status_code}")
 
 
 
