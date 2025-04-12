@@ -226,42 +226,43 @@ import streamlit as st
 from deepface import DeepFace
 import requests
 from PIL import Image
-from gtts import gTTS
 import os
 
 KNOWN_FOLDER = "known_faces"
 ESP32_SERVER_URL = "https://esp32-upload-server.onrender.com"
 FLASK_UPLOAD_URL = "https://flask-upload-pzch.onrender.com/upload"
 
-# Page Navigation
+# ----------- Streamlit Sidebar -----------
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to", ["Face Recognition", "Upload Known Face"])
 
-# Load DeepFace model once
+# ----------- Cached Lightweight Model (Facenet) -----------
 @st.cache_resource
-def load_model():
+def get_facenet_model():
     return DeepFace.build_model("Facenet")
 
-facenet_model = load_model()
+facenet_model = get_facenet_model()
 
-# Function to get latest image from ESP32 server
+# ----------- Get Latest Image from ESP32 Server -----------
 def get_latest_image():
-    r = requests.get(f"{ESP32_SERVER_URL}/latest")
-    if r.status_code != 200:
+    try:
+        r = requests.get(f"{ESP32_SERVER_URL}/latest", timeout=10)
+        if r.status_code != 200:
+            return None
+        filename = r.json()["filename"]
+        return f"{ESP32_SERVER_URL}/uploads/{filename}"
+    except:
         return None
-    filename = r.json()["filename"]
-    image_url = f"{ESP32_SERVER_URL}/uploads/{filename}"
-    return image_url
 
-# Function to check if face is detected
+# ----------- Check if Face Detected -----------
 def is_face_detected(image_path):
     try:
-        faces = DeepFace.extract_faces(img_path=image_path, enforce_detection=True, model_name="Facenet", model=facenet_model)
+        faces = DeepFace.extract_faces(img_path=image_path, enforce_detection=True)
         return len(faces) > 0
     except:
         return False
 
-# Function to compare image with known faces
+# ----------- Compare with Known Faces -----------
 def compare_with_known_faces(unknown_img_path):
     for filename in os.listdir(KNOWN_FOLDER):
         known_img_path = os.path.join(KNOWN_FOLDER, filename)
@@ -269,19 +270,19 @@ def compare_with_known_faces(unknown_img_path):
             result = DeepFace.verify(
                 img1_path=unknown_img_path,
                 img2_path=known_img_path,
-                enforce_detection=True,
                 model_name="Facenet",
-                model=facenet_model
+                model=facenet_model,
+                enforce_detection=True
             )
             if result["verified"]:
                 return filename.split('.')[0]
         except Exception as e:
-            print(f"No face detected or comparison failed with {filename}: {e}")
+            print(f"Comparison failed with {filename}: {e}")
     return None
 
-# -------------------- PAGE 1: Face Recognition --------------------
+# ----------- Page 1: Face Recognition -----------
 if page == "Face Recognition":
-    st.title("ESP32-CAM Face Recognition with DeepFace")
+    st.title("ESP32-CAM Face Recognition")
 
     if st.button("Check for New Image"):
         image_url = get_latest_image()
@@ -295,20 +296,25 @@ if page == "Face Recognition":
                 match = compare_with_known_faces("latest.jpg")
                 if match:
                     st.success(f"✅ Match found: {match}")
-                    tts = gTTS(f"Match found: {match}")
+                    # Uncomment if you still want audio
+                    # from gtts import gTTS
+                    # tts = gTTS(f"Match found: {match}")
+                    # tts.save("result.mp3")
+                    # st.audio("result.mp3", autoplay=True)
                 else:
                     st.error("❌ No match found")
-                    tts = gTTS("No match found")
+                    # tts = gTTS("No match found")
             else:
                 st.warning("😕 No face detected in the captured image.")
-                tts = gTTS("No face detected")
+                # tts = gTTS("No face detected")
 
-            tts.save("result.mp3")
-            st.audio("result.mp3", autoplay=True)
+            # Uncomment if using audio
+            # tts.save("result.mp3")
+            # st.audio("result.mp3", autoplay=True)
         else:
             st.warning("No image found on server.")
 
-# -------------------- PAGE 2: Upload Known Face --------------------
+# ----------- Page 2: Upload Known Face -----------
 elif page == "Upload Known Face":
     st.title("Upload New Known Face")
     MAX_FILE_SIZE_MB = 3
@@ -322,7 +328,7 @@ elif page == "Upload Known Face":
             file_data = uploaded_file.getvalue()
 
             if len(file_data) > MAX_FILE_SIZE_BYTES:
-                st.error(f"❌ File too large. Please upload a file under {MAX_FILE_SIZE_MB} MB.")
+                st.error(f"❌ File too large. Please upload under {MAX_FILE_SIZE_MB} MB.")
             else:
                 try:
                     safe_filename = uploaded_file.name.replace(" ", "_")
@@ -332,11 +338,10 @@ elif page == "Upload Known Face":
                     if response.status_code == 201:
                         st.success("✅ Image uploaded to GitHub successfully.")
                     else:
-                        st.error(f"❌ Upload failed. Status code: {response.status_code}\n{response.text}")
-                except requests.exceptions.ChunkedEncodingError:
-                    st.error("⚠️ Upload failed due to network or encoding error. Try again or use a smaller image.")
+                        st.error(f"❌ Upload failed. Status: {response.status_code}\n{response.text}")
                 except requests.exceptions.RequestException as e:
                     st.error(f"⚠️ Upload failed: {str(e)}")
+
 
 
 
