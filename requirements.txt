@@ -2,8 +2,6 @@ streamlit
 mysql-connector-python
 pymysql
 requests
-face_recognition
-dlib
 opencv-contrib-python-headless
 numpy
 pillow
