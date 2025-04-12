@@ -221,29 +221,29 @@
 
 
 
-
 import streamlit as st
 from deepface import DeepFace
 import requests
 from PIL import Image
 import os
+import io
 
 KNOWN_FOLDER = "known_faces"
 ESP32_SERVER_URL = "https://esp32-upload-server.onrender.com"
 FLASK_UPLOAD_URL = "https://flask-upload-pzch.onrender.com/upload"
 
-# ----------- Streamlit Sidebar -----------
+# Sidebar
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to", ["Face Recognition", "Upload Known Face"])
 
-# ----------- Cached Lightweight Model (Facenet) -----------
+# Load model
 @st.cache_resource
 def get_facenet_model():
     return DeepFace.build_model("Facenet")
 
 facenet_model = get_facenet_model()
 
-# ----------- Get Latest Image from ESP32 Server -----------
+# Get latest image
 def get_latest_image():
     try:
         r = requests.get(f"{ESP32_SERVER_URL}/latest", timeout=10)
@@ -254,7 +254,7 @@ def get_latest_image():
     except:
         return None
 
-# ----------- Check if Face Detected -----------
+# Check if face exists
 def is_face_detected(image_path):
     try:
         faces = DeepFace.extract_faces(img_path=image_path, enforce_detection=True)
@@ -262,25 +262,34 @@ def is_face_detected(image_path):
     except:
         return False
 
-# ----------- Compare with Known Faces -----------
+# Compare faces
 def compare_with_known_faces(unknown_img_path):
     for filename in os.listdir(KNOWN_FOLDER):
         known_img_path = os.path.join(KNOWN_FOLDER, filename)
         try:
+            if not is_face_detected(known_img_path):
+                print(f"[SKIP] No face detected in known image: {filename}")
+                continue
+
+            print(f"🔍 Comparing with {filename}...")
             result = DeepFace.verify(
                 img1_path=unknown_img_path,
                 img2_path=known_img_path,
                 model_name="Facenet",
                 model=facenet_model,
-                enforce_detection=True
+                enforce_detection=True,
+                distance_metric='cosine'
             )
-            if result["verified"]:
+            print(f"Result: {result}")
+
+            if result["verified"] or result["distance"] < 0.35:
                 return filename.split('.')[0]
+
         except Exception as e:
-            print(f"Comparison failed with {filename}: {e}")
+            print(f"[ERROR] Comparing with {filename}: {e}")
     return None
 
-# ----------- Page 1: Face Recognition -----------
+# ----------- PAGE 1 -----------
 if page == "Face Recognition":
     st.title("ESP32-CAM Face Recognition")
 
@@ -288,33 +297,25 @@ if page == "Face Recognition":
         image_url = get_latest_image()
         if image_url:
             st.image(image_url, caption="Captured Image", use_container_width=True)
+
+            # Convert to RGB and save
             response = requests.get(image_url)
-            with open("latest.jpg", "wb") as f:
-                f.write(response.content)
+            img = Image.open(io.BytesIO(response.content)).convert("RGB")
+            img.save("latest.jpg")
 
             if is_face_detected("latest.jpg"):
+                st.info("✅ Face detected. Comparing...")
                 match = compare_with_known_faces("latest.jpg")
                 if match:
                     st.success(f"✅ Match found: {match}")
-                    # Uncomment if you still want audio
-                    # from gtts import gTTS
-                    # tts = gTTS(f"Match found: {match}")
-                    # tts.save("result.mp3")
-                    # st.audio("result.mp3", autoplay=True)
                 else:
                     st.error("❌ No match found")
-                    # tts = gTTS("No match found")
             else:
                 st.warning("😕 No face detected in the captured image.")
-                # tts = gTTS("No face detected")
-
-            # Uncomment if using audio
-            # tts.save("result.mp3")
-            # st.audio("result.mp3", autoplay=True)
         else:
             st.warning("No image found on server.")
 
-# ----------- Page 2: Upload Known Face -----------
+# ----------- PAGE 2 -----------
 elif page == "Upload Known Face":
     st.title("Upload New Known Face")
     MAX_FILE_SIZE_MB = 3
@@ -341,6 +342,7 @@ elif page == "Upload Known Face":
                         st.error(f"❌ Upload failed. Status: {response.status_code}\n{response.text}")
                 except requests.exceptions.RequestException as e:
                     st.error(f"⚠️ Upload failed: {str(e)}")
+
 
 
 
