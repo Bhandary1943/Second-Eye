@@ -1,5 +1,5 @@
 
-# import streamlit as st
+import streamlit as st
 # from deepface import DeepFace
 # import requests
 # from PIL import Image
