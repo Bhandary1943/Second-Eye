@@ -359,34 +359,27 @@ import os
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
-# ---------------- Configuration ----------------
+# Configuration
 KNOWN_FOLDER = "known_faces"
 ESP32_SERVER_URL = "https://esp32-upload-server.onrender.com"
 FLASK_UPLOAD_URL = "https://flask-upload-pzch.onrender.com/upload"
 MODEL_NAME = "Facenet"
 THRESHOLD = 0.4  # Lower = stricter match
 
-st.set_page_config(page_title="Second Eye", layout="centered")
+# Page Navigation
+st.sidebar.title("Navigation")
+page = st.sidebar.radio("Go to", ["Face Recognition", "About Us", "Upload Known Face"])
 
-# --------------- Sidebar Navigation ---------------
-st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3601/3601536.png", width=100)
-st.sidebar.title("🔍 Second Eye Navigation")
-page = st.sidebar.radio("Go to", [
-    "🏠 Home", 
-    "📚 About Us", 
-    "🧑‍🏫 Supervisor", 
-    "🙋‍♂️ User - Face Recognition", 
-    "📤 Upload Known Face"
-])
-
-# ---------------- Utility Functions ----------------
+# Function to get latest image from ESP32 server
 def get_latest_image():
     r = requests.get(f"{ESP32_SERVER_URL}/latest")
     if r.status_code != 200:
         return None
     filename = r.json()["filename"]
-    return f"{ESP32_SERVER_URL}/uploads/{filename}"
+    image_url = f"{ESP32_SERVER_URL}/uploads/{filename}"
+    return image_url
 
+# Function to check if face is detected
 def is_face_detected(image_path):
     try:
         faces = DeepFace.extract_faces(img_path=image_path, enforce_detection=True)
@@ -394,6 +387,7 @@ def is_face_detected(image_path):
     except:
         return False
 
+# Improved comparison function using embeddings
 def compare_with_known_faces(unknown_img_path, model_name=MODEL_NAME, threshold=THRESHOLD):
     try:
         unknown_embedding = DeepFace.represent(img_path=unknown_img_path, model_name=model_name, enforce_detection=True)[0]["embedding"]
@@ -401,7 +395,7 @@ def compare_with_known_faces(unknown_img_path, model_name=MODEL_NAME, threshold=
         return None
 
     best_match = None
-    best_score = 1
+    best_score = 1  # Lowest distance = best match
 
     for filename in os.listdir(KNOWN_FOLDER):
         known_img_path = os.path.join(KNOWN_FOLDER, filename)
@@ -409,71 +403,21 @@ def compare_with_known_faces(unknown_img_path, model_name=MODEL_NAME, threshold=
             known_embedding = DeepFace.represent(img_path=known_img_path, model_name=model_name, enforce_detection=True)[0]["embedding"]
             similarity = cosine_similarity([unknown_embedding], [known_embedding])[0][0]
             distance = 1 - similarity
+            print(f"Compared with {filename}, distance: {distance:.4f}")
+
             if distance < threshold and distance < best_score:
                 best_score = distance
                 best_match = filename.split('.')[0]
-        except:
-            pass
+        except Exception as e:
+            print(f"Error comparing with {filename}: {e}")
+
     return best_match
 
-# -------------------- 🏠 Home Page --------------------
-if page == "🏠 Home":
-    st.markdown("<h1 style='text-align: center;'>👁️ Second Eye</h1>", unsafe_allow_html=True)
-    st.markdown("<h3 style='text-align: center; color: gray;'>Empowering the visually impaired with smart vision</h3>", unsafe_allow_html=True)
-    st.image("https://cdn.pixabay.com/photo/2017/03/05/18/59/eye-2116108_1280.jpg", use_column_width=True)
-    st.markdown("""
-        <div style='padding: 1rem; font-size: 18px;'>
-            Welcome to <b>Second Eye</b> – an assistive system designed for the visually impaired using AI-powered facial recognition. 
-            <br><br>
-            With just a glance from an ESP32-CAM, the device identifies known individuals and speaks out their names using speech synthesis.
-            <br><br>
-            Navigate through the menu to explore how it works, meet our team, and test the system!
-        </div>
-    """, unsafe_allow_html=True)
+# -------------------- PAGE 1: Face Recognition --------------------
+if page == "Face Recognition":
+    st.title("📸 ESP32-CAM Face Recognition")
 
-# -------------------- 📚 About Us Page --------------------
-elif page == "📚 About Us":
-    st.markdown("<h2 style='text-align: center;'>📚 About Second Eye</h2>", unsafe_allow_html=True)
-    st.image("https://cdn-icons-png.flaticon.com/512/4370/4370564.png", width=120)
-
-    st.markdown("""
-        <div style='font-size: 17px; padding-top: 1rem;'>
-            <b>Second Eye</b> is a real-time face recognition system built with the goal of assisting visually impaired individuals.
-            <br><br>
-            Our system uses:
-            <ul>
-                <li>📸 An ESP32-CAM module to capture live images</li>
-                <li>🧠 Deep learning models (Facenet via DeepFace) to recognize faces</li>
-                <li>🔊 Text-to-speech to announce the matched identity</li>
-                <li>☁️ Cloud storage and interfaces for managing known faces</li>
-            </ul>
-            <br>
-            It is easy to use, reliable, and can be expanded into a complete wearable smart vision solution.
-        </div>
-    """, unsafe_allow_html=True)
-
-# -------------------- 🧑‍🏫 Supervisor Page --------------------
-elif page == "🧑‍🏫 Supervisor":
-    st.markdown("<h2 style='text-align: center;'>🧑‍🏫 Our Guide</h2>", unsafe_allow_html=True)
-    st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=120)
-
-    st.markdown("""
-        <div style='font-size: 17px; padding-top: 1rem;'>
-            We are grateful to our project supervisor:
-            <ul>
-                <li><b>Dr. John Doe</b> – Associate Professor, Department of Electronics</li>
-                <li>Expert in Embedded Systems & AI</li>
-            </ul>
-            <br>
-            <i>"Guidance is the light that shows the path when technology meets purpose."</i>
-        </div>
-    """, unsafe_allow_html=True)
-
-# -------------------- 🙋‍♂️ Face Recognition Page --------------------
-elif page == "🙋‍♂️ User - Face Recognition":
-    st.title("🙋‍♂️ ESP32-CAM Face Recognition")
-
-    if st.button("🔍 Check for New Image"):
+    if st.button("Check for New Image"):
         image_url = get_latest_image()
         if image_url:
             st.image(image_url, caption="Captured Image", use_container_width=True)
@@ -496,21 +440,52 @@ elif page == "🙋‍♂️ User - Face Recognition":
             tts.save("result.mp3")
             st.audio("result.mp3", autoplay=True)
         else:
-            st.warning("⚠️ No image found on server.")
+            st.warning("No image found on server.")
 
-# -------------------- 📤 Upload Known Face Page --------------------
-elif page == "📤 Upload Known Face":
+# -------------------- PAGE 2: About Us --------------------
+elif page == "About Us":
+    st.title("💡 About Second Eye Project")
+
+    st.markdown("""
+    ### 👁️ What is Second Eye?
+    **Second Eye** is an assistive vision system designed for **visually impaired individuals**. It uses an **ESP32-CAM** module to capture images of people in front of the user. These images are then analyzed using advanced face recognition to determine who is in the frame.
+
+    ### 🛠️ How it Works:
+    1. The **ESP32-CAM** captures a photo and uploads it to a cloud server.
+    2. Our **Streamlit web app** fetches this image and uses **DeepFace with FaceNet** to extract facial features.
+    3. It compares the captured face with a database of **known faces** using **cosine similarity**.
+    4. If a match is found, the app plays an **audio alert** saying the person’s name using **Google Text-to-Speech (gTTS)**.
+    5. If no match is found or no face is detected, it notifies the user accordingly.
+
+    ### 🌐 System Architecture:
+    - ESP32-CAM for image capture
+    - Flask server for uploading & storing images
+    - GitHub as a cloud face database
+    - DeepFace for face recognition
+    - Streamlit as the user interface
+
+    ### 🚀 Purpose:
+    Our goal is to **empower the visually impaired** by giving them a way to recognize people around them using face recognition and audio feedback, making the world more accessible and safer.
+
+    ---
+    *Made with ❤️ by Team Second Eye.*
+    """)
+
+# -------------------- PAGE 3: Upload Known Face --------------------
+elif page == "Upload Known Face":
     st.title("📤 Upload New Known Face")
-    MAX_MB = 3
-    MAX_BYTES = MAX_MB * 1024 * 1024
+    MAX_FILE_SIZE_MB = 3
+    MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 
-    uploaded_file = st.file_uploader("Choose a face image", type=["jpg", "jpeg", "png"])
-    if uploaded_file:
+    uploaded_file = st.file_uploader("Choose an image", type=["jpg", "jpeg", "png"])
+    if uploaded_file is not None:
         st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
-        if st.button("⬆️ Upload to GitHub"):
+
+        if st.button("Upload to GitHub"):
             file_data = uploaded_file.getvalue()
-            if len(file_data) > MAX_BYTES:
-                st.error(f"❌ File too large. Please keep under {MAX_MB} MB.")
+
+            if len(file_data) > MAX_FILE_SIZE_BYTES:
+                st.error(f"❌ File too large. Please upload a file under {MAX_FILE_SIZE_MB} MB.")
             else:
                 try:
                     safe_filename = uploaded_file.name.replace(" ", "_")
@@ -518,8 +493,10 @@ elif page == "📤 Upload Known Face":
                     response = requests.post(FLASK_UPLOAD_URL, files=files, timeout=30)
 
                     if response.status_code == 201:
-                        st.success("✅ Image uploaded successfully.")
+                        st.success("✅ Image uploaded to GitHub successfully.")
                     else:
-                        st.error(f"❌ Upload failed. Status: {response.status_code}\n{response.text}")
+                        st.error(f"❌ Upload failed. Status code: {response.status_code}\n{response.text}")
+                except requests.exceptions.ChunkedEncodingError:
+                    st.error("⚠️ Upload failed due to network or encoding error. Try again or use a smaller image.")
                 except requests.exceptions.RequestException as e:
                     st.error(f"⚠️ Upload failed: {str(e)}")
