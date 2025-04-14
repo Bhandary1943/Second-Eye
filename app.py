@@ -416,77 +416,43 @@ def compare_with_known_faces(unknown_img_path, model_name=MODEL_NAME, threshold=
 
 # -------------------- PAGE 1: Face Recognition --------------------
 if page == "Face Recognition":
-    st.markdown("""
-        <style>
-        .title {
-            text-align: center;
-            font-size: 44px;
-            font-weight: bold;
-            background: linear-gradient(to right, #4facfe, #00f2fe);
-            -webkit-background-clip: text;
-            color: transparent;
-            margin-bottom: 5px;
-        }
-        .subtitle {
-            text-align: center;
-            font-size: 18px;
-            margin-top: -5px;
-            color: #444;
-        }
-        .result-box {
-            padding: 15px;
-            border-radius: 15px;
-            text-align: center;
-            font-size: 20px;
-            font-weight: bold;
-            background-color: #f4f4f4;
-            box-shadow: 0 0 12px rgba(0,0,0,0.1);
-            margin-top: 15px;
-        }
-        .image-card {
-            background-color: #ffffff;
-            padding: 10px;
-            border-radius: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            margin-bottom: 20px;
-        }
-        </style>
-        <div class='title'>🎯 Face Recognition</div>
-        <div class='subtitle'>Click the button below to detect and recognize a face from ESP32-CAM</div>
-        <br>
-    """, unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #4CAF50;'>📸 Real-Time Face Recognition</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size: 18px;'>Tap the button below to check the latest image from ESP32-CAM</p>", unsafe_allow_html=True)
 
-    if st.button("📷 Detect Face"):
+    if st.button("🔍 Detect Face", use_container_width=True):
         image_url = get_latest_image()
         if image_url:
+            st.markdown("---")
             st.markdown("### 🖼️ Captured Image:")
+
+            # Load and optionally resize image for display
             response = requests.get(image_url)
             img = Image.open(io.BytesIO(response.content))
-            img_resized = img.resize((600, 450))
+            img_resized = img.resize((600, 450))  # Resize if needed
+            st.image(img_resized, caption="📸 Captured Image", use_container_width=True)
 
-            with st.container():
-                st.markdown("<div class='image-card'>", unsafe_allow_html=True)
-                st.image(img_resized, use_container_width=True)
-                st.markdown("</div>", unsafe_allow_html=True)
-
+            # Save image locally
             img.save("latest.jpg")
 
+            # Check for face and compare
             if is_face_detected("latest.jpg"):
                 match = compare_with_known_faces("latest.jpg")
                 if match:
-                    st.markdown(f"<div class='result-box' style='color: green;'>✅ Match Found: {match}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<h3 style='color: green;'>✅ Match Found: <span style='color: #2196F3;'>{match}</span></h3>", unsafe_allow_html=True)
                     tts = gTTS(f"Match found. This is {match}")
                 else:
-                    st.markdown("<div class='result-box' style='color: red;'>❌ No Match Found</div>", unsafe_allow_html=True)
+                    st.markdown("<h3 style='color: red;'>❌ No Match Found</h3>", unsafe_allow_html=True)
                     tts = gTTS("No match found")
             else:
-                st.markdown("<div class='result-box' style='color: orange;'>😕 No Face Detected</div>", unsafe_allow_html=True)
+                st.markdown("<h3 style='color: orange;'>😕 No Face Detected</h3>", unsafe_allow_html=True)
                 tts = gTTS("No face detected")
 
+            # Play result audio
             tts.save("result.mp3")
             st.audio("result.mp3", autoplay=True)
         else:
             st.warning("⚠️ No image found on server. Please make sure ESP32-CAM has uploaded a photo.")
+
 
 # -------------------- PAGE 2: About Us --------------------
 elif page == "About Us":
