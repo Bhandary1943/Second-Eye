@@ -4,6 +4,7 @@ pymysql
 requests
 opencv-contrib-python-headless
 numpy
+scikit-learn
 pillow
 pyttsx3
 cmake
