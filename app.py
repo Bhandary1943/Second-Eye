@@ -356,6 +356,7 @@ import requests
 from PIL import Image
 from gtts import gTTS
 import os
+import io
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
@@ -367,7 +368,8 @@ MODEL_NAME = "Facenet"
 THRESHOLD = 0.4  # Lower = stricter match
 
 # Page Navigation
-st.sidebar.title("Navigation")
+st.set_page_config(page_title="Second Eye", layout="wide")
+st.sidebar.title("🔍 Navigation")
 page = st.sidebar.radio("Go to", ["Face Recognition", "About Us", "Upload Known Face"])
 
 # Function to get latest image from ESP32 server
@@ -387,7 +389,7 @@ def is_face_detected(image_path):
     except:
         return False
 
-# Improved comparison function using embeddings
+# Comparison function
 def compare_with_known_faces(unknown_img_path, model_name=MODEL_NAME, threshold=THRESHOLD):
     try:
         unknown_embedding = DeepFace.represent(img_path=unknown_img_path, model_name=model_name, enforce_detection=True)[0]["embedding"]
@@ -403,7 +405,6 @@ def compare_with_known_faces(unknown_img_path, model_name=MODEL_NAME, threshold=
             known_embedding = DeepFace.represent(img_path=known_img_path, model_name=model_name, enforce_detection=True)[0]["embedding"]
             similarity = cosine_similarity([unknown_embedding], [known_embedding])[0][0]
             distance = 1 - similarity
-            print(f"Compared with {filename}, distance: {distance:.4f}")
 
             if distance < threshold and distance < best_score:
                 best_score = distance
@@ -412,24 +413,25 @@ def compare_with_known_faces(unknown_img_path, model_name=MODEL_NAME, threshold=
             print(f"Error comparing with {filename}: {e}")
 
     return best_match
-    # -------------------- PAGE 1: Face Recognition --------------------
+
+# -------------------- PAGE 1: Face Recognition --------------------
 if page == "Face Recognition":
     st.markdown("""
         <style>
         .title {
             text-align: center;
-            font-size: 40px;
+            font-size: 44px;
             font-weight: bold;
-            background: linear-gradient(to right, #00b09b, #96c93d);
+            background: linear-gradient(to right, #4facfe, #00f2fe);
             -webkit-background-clip: text;
             color: transparent;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
         .subtitle {
             text-align: center;
             font-size: 18px;
-            margin-top: -10px;
-            color: #555;
+            margin-top: -5px;
+            color: #444;
         }
         .result-box {
             padding: 15px;
@@ -437,8 +439,8 @@ if page == "Face Recognition":
             text-align: center;
             font-size: 20px;
             font-weight: bold;
-            background-color: #f9f9f9;
-            box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+            background-color: #f4f4f4;
+            box-shadow: 0 0 12px rgba(0,0,0,0.1);
             margin-top: 15px;
         }
         .image-card {
@@ -448,30 +450,13 @@ if page == "Face Recognition":
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             margin-bottom: 20px;
         }
-        .button-animated {
-            display: inline-block;
-            padding: 10px 20px;
-            font-size: 18px;
-            border-radius: 10px;
-            background-color: #4CAF50;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: center;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
         </style>
-        <div class='title'>📸 Real-Time Face Recognition</div>
-        <div class='subtitle'>Tap below to fetch the latest face from ESP32-CAM and get a match result</div>
+        <div class='title'>🎯 Face Recognition</div>
+        <div class='subtitle'>Click the button below to detect and recognize a face from ESP32-CAM</div>
         <br>
     """, unsafe_allow_html=True)
 
-    if st.button("🔍 Detect Face", key="detect_button"):
+    if st.button("📷 Detect Face"):
         image_url = get_latest_image()
         if image_url:
             st.markdown("### 🖼️ Captured Image:")
@@ -502,7 +487,6 @@ if page == "Face Recognition":
             st.audio("result.mp3", autoplay=True)
         else:
             st.warning("⚠️ No image found on server. Please make sure ESP32-CAM has uploaded a photo.")
-
 
 # -------------------- PAGE 2: About Us --------------------
 elif page == "About Us":
@@ -562,3 +546,4 @@ elif page == "Upload Known Face":
                     st.error("⚠️ Upload failed due to network or encoding error. Try again or use a smaller image.")
                 except requests.exceptions.RequestException as e:
                     st.error(f"⚠️ Upload failed: {str(e)}")
+
