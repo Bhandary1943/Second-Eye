@@ -414,40 +414,120 @@ def compare_with_known_faces(unknown_img_path, model_name=MODEL_NAME, threshold=
 
     return best_match
 
-# -------------------- PAGE 1: Face Recognition --------------------
+# # -------------------- PAGE 1: Face Recognition --------------------
+# if page == "Face Recognition":
+#     st.markdown("<h1 style='text-align: center; color: #4CAF50;'>📸 Real-Time Face Recognition</h1>", unsafe_allow_html=True)
+#     st.markdown("<p style='text-align: center; font-size: 18px;'>Tap the button below to check the latest image from ESP32-CAM</p>", unsafe_allow_html=True)
+
+#     if st.button("🔍 Detect Face", use_container_width=True):
+#         image_url = get_latest_image()
+#         if image_url:
+#             st.markdown("---")
+#             st.markdown("### 🖼️ Captured Image:")
+
+#             # Load and optionally resize image for display
+#             response = requests.get(image_url)
+#             img = Image.open(io.BytesIO(response.content))
+#             img_resized = img.resize((600, 450))  # Resize if needed
+#             st.image(img_resized, caption="📸 Captured Image", use_container_width=True)
+
+#             # Save image locally
+#             img.save("latest.jpg")
+
+#             # Check for face and compare
+#             if is_face_detected("latest.jpg"):
+#                 match = compare_with_known_faces("latest.jpg")
+#                 if match:
+#                     st.markdown(f"<h3 style='color: green;'>✅ Match Found: <span style='color: #2196F3;'>{match}</span></h3>", unsafe_allow_html=True)
+#                     tts = gTTS(f"Match found. This is {match}")
+#                 else:
+#                     st.markdown("<h3 style='color: red;'>❌ No Match Found</h3>", unsafe_allow_html=True)
+#                     tts = gTTS("No match found")
+#             else:
+#                 st.markdown("<h3 style='color: orange;'>😕 No Face Detected</h3>", unsafe_allow_html=True)
+#                 tts = gTTS("No face detected")
+
+#             # Play result audio
+#             tts.save("result.mp3")
+#             st.audio("result.mp3", autoplay=True)
+#         else:
+#             st.warning("⚠️ No image found on server. Please make sure ESP32-CAM has uploaded a photo.")
+
+
 if page == "Face Recognition":
-    st.markdown("<h1 style='text-align: center; color: #4CAF50;'>📸 Real-Time Face Recognition</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; font-size: 18px;'>Tap the button below to check the latest image from ESP32-CAM</p>", unsafe_allow_html=True)
+    st.markdown("""
+        <style>
+        .face-header {
+            text-align: center;
+            font-size: 38px;
+            font-weight: bold;
+            background: -webkit-linear-gradient(#4CAF50, #00bcd4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: 10px;
+        }
+        .face-subtext {
+            text-align: center;
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 25px;
+        }
+        .result-box {
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 20px;
+            text-align: center;
+            font-weight: bold;
+            background-color: #ffffff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .highlight {
+            color: #2196F3;
+        }
+        .match-green {
+            color: green;
+        }
+        .no-match-red {
+            color: red;
+        }
+        .no-face-orange {
+            color: orange;
+        }
+        </style>
+
+        <div class='face-header'>📸 Real-Time Face Recognition</div>
+        <p class='face-subtext'>Click the button below to check the latest image from ESP32-CAM</p>
+    """, unsafe_allow_html=True)
 
     if st.button("🔍 Detect Face", use_container_width=True):
         image_url = get_latest_image()
         if image_url:
-            st.markdown("---")
             st.markdown("### 🖼️ Captured Image:")
 
-            # Load and optionally resize image for display
+            # Load and resize the image
             response = requests.get(image_url)
             img = Image.open(io.BytesIO(response.content))
-            img_resized = img.resize((600, 450))  # Resize if needed
-            st.image(img_resized, caption="📸 Captured Image", use_container_width=True)
+            img_resized = img.resize((600, 450))
+            st.image(img_resized, caption="📸 ESP32-CAM Capture", use_container_width=True)
 
-            # Save image locally
+            # Save locally for recognition
             img.save("latest.jpg")
 
-            # Check for face and compare
+            # Face Detection and Matching
             if is_face_detected("latest.jpg"):
                 match = compare_with_known_faces("latest.jpg")
                 if match:
-                    st.markdown(f"<h3 style='color: green;'>✅ Match Found: <span style='color: #2196F3;'>{match}</span></h3>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='result-box match-green'>✅ Match Found: <span class='highlight'>{match}</span></div>", unsafe_allow_html=True)
                     tts = gTTS(f"Match found. This is {match}")
                 else:
-                    st.markdown("<h3 style='color: red;'>❌ No Match Found</h3>", unsafe_allow_html=True)
+                    st.markdown("<div class='result-box no-match-red'>❌ No Match Found</div>", unsafe_allow_html=True)
                     tts = gTTS("No match found")
             else:
-                st.markdown("<h3 style='color: orange;'>😕 No Face Detected</h3>", unsafe_allow_html=True)
+                st.markdown("<div class='result-box no-face-orange'>😕 No Face Detected</div>", unsafe_allow_html=True)
                 tts = gTTS("No face detected")
 
-            # Play result audio
+            # Audio feedback
             tts.save("result.mp3")
             st.audio("result.mp3", autoplay=True)
         else:
