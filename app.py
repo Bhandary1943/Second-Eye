@@ -532,6 +532,15 @@ if page == "Face Recognition":
             st.audio("result.mp3", autoplay=True)
         else:
             st.warning("⚠️ No image found on server. Please make sure ESP32-CAM has uploaded a photo.")
+st.markdown("""
+<hr style='border:1px solid #ccc;'>
+
+<div style='text-align: center; font-size: 14px; color: #666; padding-top: 10px;'>
+  © 2025 | Developed by <strong>Reethu</strong>, <strong>Prajwal</strong>, <strong>Sharath</strong>, and <strong>Akhilesh</strong><br>
+  as part of the <em>Second Eye</em> Assistive Vision System.
+</div>
+""", unsafe_allow_html=True)
+
 
 
 # -------------------- PAGE 2: About Us --------------------
