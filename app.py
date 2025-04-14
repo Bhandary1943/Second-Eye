@@ -350,6 +350,261 @@
 
 
 
+# import streamlit as st
+# from deepface import DeepFace
+# import requests
+# from PIL import Image
+# from gtts import gTTS
+# import os
+# import io
+# from sklearn.metrics.pairwise import cosine_similarity
+# import numpy as np
+
+# # Configuration
+# KNOWN_FOLDER = "known_faces"
+# ESP32_SERVER_URL = "https://esp32-upload-server.onrender.com"
+# FLASK_UPLOAD_URL = "https://flask-upload-pzch.onrender.com/upload"
+# MODEL_NAME = "Facenet"
+# THRESHOLD = 0.4  # Lower = stricter match
+
+# # Page Navigation
+# st.set_page_config(page_title="Second Eye", layout="wide")
+# st.sidebar.title("🔍 Navigation")
+# page = st.sidebar.radio("Go to", ["Face Recognition", "About Us", "Upload Known Face"])
+
+# # Function to get latest image from ESP32 server
+# def get_latest_image():
+#     r = requests.get(f"{ESP32_SERVER_URL}/latest")
+#     if r.status_code != 200:
+#         return None
+#     filename = r.json()["filename"]
+#     image_url = f"{ESP32_SERVER_URL}/uploads/{filename}"
+#     return image_url
+
+# # Function to check if face is detected
+# def is_face_detected(image_path):
+#     try:
+#         faces = DeepFace.extract_faces(img_path=image_path, enforce_detection=True)
+#         return len(faces) > 0
+#     except:
+#         return False
+
+# # Comparison function
+# def compare_with_known_faces(unknown_img_path, model_name=MODEL_NAME, threshold=THRESHOLD):
+#     try:
+#         unknown_embedding = DeepFace.represent(img_path=unknown_img_path, model_name=model_name, enforce_detection=True)[0]["embedding"]
+#     except:
+#         return None
+
+#     best_match = None
+#     best_score = 1  # Lowest distance = best match
+
+#     for filename in os.listdir(KNOWN_FOLDER):
+#         known_img_path = os.path.join(KNOWN_FOLDER, filename)
+#         try:
+#             known_embedding = DeepFace.represent(img_path=known_img_path, model_name=model_name, enforce_detection=True)[0]["embedding"]
+#             similarity = cosine_similarity([unknown_embedding], [known_embedding])[0][0]
+#             distance = 1 - similarity
+
+#             if distance < threshold and distance < best_score:
+#                 best_score = distance
+#                 best_match = filename.split('.')[0]
+#         except Exception as e:
+#             print(f"Error comparing with {filename}: {e}")
+
+#     return best_match
+
+# # # -------------------- PAGE 1: Face Recognition --------------------
+# # if page == "Face Recognition":
+# #     st.markdown("<h1 style='text-align: center; color: #4CAF50;'>📸 Real-Time Face Recognition</h1>", unsafe_allow_html=True)
+# #     st.markdown("<p style='text-align: center; font-size: 18px;'>Tap the button below to check the latest image from ESP32-CAM</p>", unsafe_allow_html=True)
+
+# #     if st.button("🔍 Detect Face", use_container_width=True):
+# #         image_url = get_latest_image()
+# #         if image_url:
+# #             st.markdown("---")
+# #             st.markdown("### 🖼️ Captured Image:")
+
+# #             # Load and optionally resize image for display
+# #             response = requests.get(image_url)
+# #             img = Image.open(io.BytesIO(response.content))
+# #             img_resized = img.resize((600, 450))  # Resize if needed
+# #             st.image(img_resized, caption="📸 Captured Image", use_container_width=True)
+
+# #             # Save image locally
+# #             img.save("latest.jpg")
+
+# #             # Check for face and compare
+# #             if is_face_detected("latest.jpg"):
+# #                 match = compare_with_known_faces("latest.jpg")
+# #                 if match:
+# #                     st.markdown(f"<h3 style='color: green;'>✅ Match Found: <span style='color: #2196F3;'>{match}</span></h3>", unsafe_allow_html=True)
+# #                     tts = gTTS(f"Match found. This is {match}")
+# #                 else:
+# #                     st.markdown("<h3 style='color: red;'>❌ No Match Found</h3>", unsafe_allow_html=True)
+# #                     tts = gTTS("No match found")
+# #             else:
+# #                 st.markdown("<h3 style='color: orange;'>😕 No Face Detected</h3>", unsafe_allow_html=True)
+# #                 tts = gTTS("No face detected")
+
+# #             # Play result audio
+# #             tts.save("result.mp3")
+# #             st.audio("result.mp3", autoplay=True)
+# #         else:
+# #             st.warning("⚠️ No image found on server. Please make sure ESP32-CAM has uploaded a photo.")
+
+
+# if page == "Face Recognition":
+#     st.markdown("""
+#         <style>
+#         .face-header {
+#             text-align: center;
+#             font-size: 38px;
+#             font-weight: bold;
+#             background: -webkit-linear-gradient(#4CAF50, #00bcd4);
+#             -webkit-background-clip: text;
+#             -webkit-text-fill-color: transparent;
+#             margin-top: 10px;
+#         }
+#         .face-subtext {
+#             text-align: center;
+#             font-size: 18px;
+#             color: #666;
+#             margin-bottom: 25px;
+#         }
+#         .result-box {
+#             padding: 15px;
+#             border-radius: 15px;
+#             font-size: 20px;
+#             text-align: center;
+#             font-weight: bold;
+#             background-color: #ffffff;
+#             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+#             margin-top: 20px;
+#         }
+#         .highlight {
+#             color: #2196F3;
+#         }
+#         .match-green {
+#             color: green;
+#         }
+#         .no-match-red {
+#             color: red;
+#         }
+#         .no-face-orange {
+#             color: orange;
+#         }
+#         </style>
+
+#         <div class='face-header'>📸 Real-Time Face Recognition</div>
+#         <p class='face-subtext'>Click the button below to check the latest image from ESP32-CAM</p>
+#     """, unsafe_allow_html=True)
+
+#     if st.button("🔍 Detect Face", use_container_width=True):
+#         image_url = get_latest_image()
+#         if image_url:
+#             st.markdown("### 🖼️ Captured Image:")
+
+#             # Load and resize the image
+#             response = requests.get(image_url)
+#             img = Image.open(io.BytesIO(response.content))
+#             img_resized = img.resize((600, 450))
+#             st.image(img_resized, caption="📸 ESP32-CAM Capture", use_container_width=True)
+
+#             # Save locally for recognition
+#             img.save("latest.jpg")
+
+#             # Face Detection and Matching
+#             if is_face_detected("latest.jpg"):
+#                 match = compare_with_known_faces("latest.jpg")
+#                 if match:
+#                     st.markdown(f"<div class='result-box match-green'>✅ Match Found: <span class='highlight'>{match}</span></div>", unsafe_allow_html=True)
+#                     tts = gTTS(f"Match found. This is {match}")
+#                 else:
+#                     st.markdown("<div class='result-box no-match-red'>❌ No Match Found</div>", unsafe_allow_html=True)
+#                     tts = gTTS("No match found")
+#             else:
+#                 st.markdown("<div class='result-box no-face-orange'>😕 No Face Detected</div>", unsafe_allow_html=True)
+#                 tts = gTTS("No face detected")
+
+#             # Audio feedback
+#             tts.save("result.mp3")
+#             st.audio("result.mp3", autoplay=True)
+#         else:
+#             st.warning("⚠️ No image found on server. Please make sure ESP32-CAM has uploaded a photo.")
+# st.markdown("""
+# <hr style='border:1px solid #ccc;'>
+
+# <div style='text-align: center; font-size: 14px; color: #666; padding-top: 10px;'>
+#   © 2025 | Developed by <strong>Reethu</strong>, <strong>Prajwal</strong>, <strong>Sharath</strong>, and <strong>Akhilesh</strong><br>
+#   as part of the <em>Second Eye</em> Assistive Vision System.
+# </div>
+# """, unsafe_allow_html=True)
+
+
+
+# # -------------------- PAGE 2: About Us --------------------
+# elif page == "About Us":
+#     st.title("💡 About Second Eye Project")
+
+#     st.markdown("""
+#     ### 👁️ What is Second Eye?
+#     **Second Eye** is an assistive vision system designed for **visually impaired individuals**. It uses an **ESP32-CAM** module to capture images of people in front of the user. These images are then analyzed using advanced face recognition to determine who is in the frame.
+
+#     ### 🛠️ How it Works:
+#     1. The **ESP32-CAM** captures a photo and uploads it to a cloud server.
+#     2. Our **Streamlit web app** fetches this image and uses **DeepFace with FaceNet** to extract facial features.
+#     3. It compares the captured face with a database of **known faces** using **cosine similarity**.
+#     4. If a match is found, the app plays an **audio alert** saying the person’s name using **Google Text-to-Speech (gTTS)**.
+#     5. If no match is found or no face is detected, it notifies the user accordingly.
+
+#     ### 🌐 System Architecture:
+#     - ESP32-CAM for image capture
+#     - Flask server for uploading & storing images
+#     - GitHub as a cloud face database
+#     - DeepFace for face recognition
+#     - Streamlit as the user interface
+
+#     ### 🚀 Purpose:
+#     Our goal is to **empower the visually impaired** by giving them a way to recognize people around them using face recognition and audio feedback, making the world more accessible and safer.
+
+#     ---
+#     *Made with ❤️ by Team Second Eye.*
+#     """)
+
+# # -------------------- PAGE 3: Upload Known Face --------------------
+# elif page == "Upload Known Face":
+#     st.title("📤 Upload New Known Face")
+#     MAX_FILE_SIZE_MB = 3
+#     MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+
+#     uploaded_file = st.file_uploader("Choose an image", type=["jpg", "jpeg", "png"])
+#     if uploaded_file is not None:
+#         st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
+
+#         if st.button("Upload to GitHub"):
+#             file_data = uploaded_file.getvalue()
+
+#             if len(file_data) > MAX_FILE_SIZE_BYTES:
+#                 st.error(f"❌ File too large. Please upload a file under {MAX_FILE_SIZE_MB} MB.")
+#             else:
+#                 try:
+#                     safe_filename = uploaded_file.name.replace(" ", "_")
+#                     files = {"file": (safe_filename, file_data)}
+#                     response = requests.post(FLASK_UPLOAD_URL, files=files, timeout=30)
+
+#                     if response.status_code == 201:
+#                         st.success("✅ Image uploaded to GitHub successfully.")
+#                     else:
+#                         st.error(f"❌ Upload failed. Status code: {response.status_code}\n{response.text}")
+#                 except requests.exceptions.ChunkedEncodingError:
+#                     st.error("⚠️ Upload failed due to network or encoding error. Try again or use a smaller image.")
+#                 except requests.exceptions.RequestException as e:
+#                     st.error(f"⚠️ Upload failed: {str(e)}")
+
+
+
+
 import streamlit as st
 from deepface import DeepFace
 import requests
@@ -365,23 +620,31 @@ KNOWN_FOLDER = "known_faces"
 ESP32_SERVER_URL = "https://esp32-upload-server.onrender.com"
 FLASK_UPLOAD_URL = "https://flask-upload-pzch.onrender.com/upload"
 MODEL_NAME = "Facenet"
-THRESHOLD = 0.4  # Lower = stricter match
+THRESHOLD = 0.4
 
 # Page Navigation
 st.set_page_config(page_title="Second Eye", layout="wide")
 st.sidebar.title("🔍 Navigation")
 page = st.sidebar.radio("Go to", ["Face Recognition", "About Us", "Upload Known Face"])
 
-# Function to get latest image from ESP32 server
+# Shared Footer
+def render_footer():
+    st.markdown("""
+    <hr style='border:1px solid #ccc;'>
+    <div style='text-align: center; font-size: 14px; color: #666; padding-top: 10px;'>
+      © 2025 | Developed by <strong>Reethu</strong>, <strong>Prajwal</strong>, <strong>Sharath</strong>, and <strong>Akhilesh</strong><br>
+      as part of the <em>Second Eye</em> Assistive Vision System.
+    </div>
+    """, unsafe_allow_html=True)
+
+# Utility Functions
 def get_latest_image():
     r = requests.get(f"{ESP32_SERVER_URL}/latest")
     if r.status_code != 200:
         return None
     filename = r.json()["filename"]
-    image_url = f"{ESP32_SERVER_URL}/uploads/{filename}"
-    return image_url
+    return f"{ESP32_SERVER_URL}/uploads/{filename}"
 
-# Function to check if face is detected
 def is_face_detected(image_path):
     try:
         faces = DeepFace.extract_faces(img_path=image_path, enforce_detection=True)
@@ -389,7 +652,6 @@ def is_face_detected(image_path):
     except:
         return False
 
-# Comparison function
 def compare_with_known_faces(unknown_img_path, model_name=MODEL_NAME, threshold=THRESHOLD):
     try:
         unknown_embedding = DeepFace.represent(img_path=unknown_img_path, model_name=model_name, enforce_detection=True)[0]["embedding"]
@@ -397,7 +659,7 @@ def compare_with_known_faces(unknown_img_path, model_name=MODEL_NAME, threshold=
         return None
 
     best_match = None
-    best_score = 1  # Lowest distance = best match
+    best_score = 1
 
     for filename in os.listdir(KNOWN_FOLDER):
         known_img_path = os.path.join(KNOWN_FOLDER, filename)
@@ -411,110 +673,64 @@ def compare_with_known_faces(unknown_img_path, model_name=MODEL_NAME, threshold=
                 best_match = filename.split('.')[0]
         except Exception as e:
             print(f"Error comparing with {filename}: {e}")
-
     return best_match
 
-# # -------------------- PAGE 1: Face Recognition --------------------
-# if page == "Face Recognition":
-#     st.markdown("<h1 style='text-align: center; color: #4CAF50;'>📸 Real-Time Face Recognition</h1>", unsafe_allow_html=True)
-#     st.markdown("<p style='text-align: center; font-size: 18px;'>Tap the button below to check the latest image from ESP32-CAM</p>", unsafe_allow_html=True)
-
-#     if st.button("🔍 Detect Face", use_container_width=True):
-#         image_url = get_latest_image()
-#         if image_url:
-#             st.markdown("---")
-#             st.markdown("### 🖼️ Captured Image:")
-
-#             # Load and optionally resize image for display
-#             response = requests.get(image_url)
-#             img = Image.open(io.BytesIO(response.content))
-#             img_resized = img.resize((600, 450))  # Resize if needed
-#             st.image(img_resized, caption="📸 Captured Image", use_container_width=True)
-
-#             # Save image locally
-#             img.save("latest.jpg")
-
-#             # Check for face and compare
-#             if is_face_detected("latest.jpg"):
-#                 match = compare_with_known_faces("latest.jpg")
-#                 if match:
-#                     st.markdown(f"<h3 style='color: green;'>✅ Match Found: <span style='color: #2196F3;'>{match}</span></h3>", unsafe_allow_html=True)
-#                     tts = gTTS(f"Match found. This is {match}")
-#                 else:
-#                     st.markdown("<h3 style='color: red;'>❌ No Match Found</h3>", unsafe_allow_html=True)
-#                     tts = gTTS("No match found")
-#             else:
-#                 st.markdown("<h3 style='color: orange;'>😕 No Face Detected</h3>", unsafe_allow_html=True)
-#                 tts = gTTS("No face detected")
-
-#             # Play result audio
-#             tts.save("result.mp3")
-#             st.audio("result.mp3", autoplay=True)
-#         else:
-#             st.warning("⚠️ No image found on server. Please make sure ESP32-CAM has uploaded a photo.")
-
-
+# Page 1: Face Recognition
 if page == "Face Recognition":
     st.markdown("""
-        <style>
-        .face-header {
-            text-align: center;
-            font-size: 38px;
-            font-weight: bold;
-            background: -webkit-linear-gradient(#4CAF50, #00bcd4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-top: 10px;
-        }
-        .face-subtext {
-            text-align: center;
-            font-size: 18px;
-            color: #666;
-            margin-bottom: 25px;
-        }
-        .result-box {
-            padding: 15px;
-            border-radius: 15px;
-            font-size: 20px;
-            text-align: center;
-            font-weight: bold;
-            background-color: #ffffff;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            margin-top: 20px;
-        }
-        .highlight {
-            color: #2196F3;
-        }
-        .match-green {
-            color: green;
-        }
-        .no-match-red {
-            color: red;
-        }
-        .no-face-orange {
-            color: orange;
-        }
-        </style>
-
-        <div class='face-header'>📸 Real-Time Face Recognition</div>
-        <p class='face-subtext'>Click the button below to check the latest image from ESP32-CAM</p>
+    <style>
+    .face-header {
+        text-align: center;
+        font-size: 38px;
+        font-weight: bold;
+        background: -webkit-linear-gradient(#4CAF50, #00bcd4);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-top: 10px;
+    }
+    .face-subtext {
+        text-align: center;
+        font-size: 18px;
+        color: #666;
+        margin-bottom: 25px;
+    }
+    .result-box {
+        padding: 15px;
+        border-radius: 15px;
+        font-size: 20px;
+        text-align: center;
+        font-weight: bold;
+        background-color: #ffffff;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-top: 20px;
+    }
+    .highlight {
+        color: #2196F3;
+    }
+    .match-green {
+        color: green;
+    }
+    .no-match-red {
+        color: red;
+    }
+    .no-face-orange {
+        color: orange;
+    }
+    </style>
+    <div class='face-header'>📸 Real-Time Face Recognition</div>
+    <p class='face-subtext'>Click the button below to check the latest image from ESP32-CAM</p>
     """, unsafe_allow_html=True)
 
     if st.button("🔍 Detect Face", use_container_width=True):
         image_url = get_latest_image()
         if image_url:
             st.markdown("### 🖼️ Captured Image:")
-
-            # Load and resize the image
             response = requests.get(image_url)
             img = Image.open(io.BytesIO(response.content))
             img_resized = img.resize((600, 450))
             st.image(img_resized, caption="📸 ESP32-CAM Capture", use_container_width=True)
-
-            # Save locally for recognition
             img.save("latest.jpg")
 
-            # Face Detection and Matching
             if is_face_detected("latest.jpg"):
                 match = compare_with_known_faces("latest.jpg")
                 if match:
@@ -527,78 +743,64 @@ if page == "Face Recognition":
                 st.markdown("<div class='result-box no-face-orange'>😕 No Face Detected</div>", unsafe_allow_html=True)
                 tts = gTTS("No face detected")
 
-            # Audio feedback
             tts.save("result.mp3")
             st.audio("result.mp3", autoplay=True)
         else:
             st.warning("⚠️ No image found on server. Please make sure ESP32-CAM has uploaded a photo.")
-st.markdown("""
-<hr style='border:1px solid #ccc;'>
 
-<div style='text-align: center; font-size: 14px; color: #666; padding-top: 10px;'>
-  © 2025 | Developed by <strong>Reethu</strong>, <strong>Prajwal</strong>, <strong>Sharath</strong>, and <strong>Akhilesh</strong><br>
-  as part of the <em>Second Eye</em> Assistive Vision System.
-</div>
-""", unsafe_allow_html=True)
+    render_footer()
 
-
-
-# -------------------- PAGE 2: About Us --------------------
+# Page 2: About Us
 elif page == "About Us":
     st.title("💡 About Second Eye Project")
-
     st.markdown("""
     ### 👁️ What is Second Eye?
     **Second Eye** is an assistive vision system designed for **visually impaired individuals**. It uses an **ESP32-CAM** module to capture images of people in front of the user. These images are then analyzed using advanced face recognition to determine who is in the frame.
 
     ### 🛠️ How it Works:
-    1. The **ESP32-CAM** captures a photo and uploads it to a cloud server.
-    2. Our **Streamlit web app** fetches this image and uses **DeepFace with FaceNet** to extract facial features.
-    3. It compares the captured face with a database of **known faces** using **cosine similarity**.
-    4. If a match is found, the app plays an **audio alert** saying the person’s name using **Google Text-to-Speech (gTTS)**.
+    1. ESP32-CAM captures a photo and uploads it to a cloud server.
+    2. Our Streamlit web app fetches this image and uses DeepFace with FaceNet.
+    3. It compares the captured face with a database of known faces using cosine similarity.
+    4. If a match is found, the app plays an audio alert saying the person’s name.
     5. If no match is found or no face is detected, it notifies the user accordingly.
 
     ### 🌐 System Architecture:
-    - ESP32-CAM for image capture
-    - Flask server for uploading & storing images
-    - GitHub as a cloud face database
-    - DeepFace for face recognition
-    - Streamlit as the user interface
+    - ESP32-CAM for image capture  
+    - Flask server for uploading & storing images  
+    - GitHub as cloud face database  
+    - DeepFace for recognition  
+    - Streamlit as the UI  
 
     ### 🚀 Purpose:
-    Our goal is to **empower the visually impaired** by giving them a way to recognize people around them using face recognition and audio feedback, making the world more accessible and safer.
-
-    ---
-    *Made with ❤️ by Team Second Eye.*
+    Our goal is to empower the visually impaired by helping them recognize people around them using face recognition and voice feedback.
     """)
+    render_footer()
 
-# -------------------- PAGE 3: Upload Known Face --------------------
+# Page 3: Upload Known Face
 elif page == "Upload Known Face":
     st.title("📤 Upload New Known Face")
-    MAX_FILE_SIZE_MB = 3
-    MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+    MAX_MB = 3
+    MAX_BYTES = MAX_MB * 1024 * 1024
 
     uploaded_file = st.file_uploader("Choose an image", type=["jpg", "jpeg", "png"])
-    if uploaded_file is not None:
+    if uploaded_file:
         st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
-
         if st.button("Upload to GitHub"):
             file_data = uploaded_file.getvalue()
-
-            if len(file_data) > MAX_FILE_SIZE_BYTES:
-                st.error(f"❌ File too large. Please upload a file under {MAX_FILE_SIZE_MB} MB.")
+            if len(file_data) > MAX_BYTES:
+                st.error(f"❌ File too large. Please upload under {MAX_MB} MB.")
             else:
                 try:
                     safe_filename = uploaded_file.name.replace(" ", "_")
                     files = {"file": (safe_filename, file_data)}
                     response = requests.post(FLASK_UPLOAD_URL, files=files, timeout=30)
-
                     if response.status_code == 201:
                         st.success("✅ Image uploaded to GitHub successfully.")
                     else:
                         st.error(f"❌ Upload failed. Status code: {response.status_code}\n{response.text}")
                 except requests.exceptions.ChunkedEncodingError:
-                    st.error("⚠️ Upload failed due to network or encoding error. Try again or use a smaller image.")
+                    st.error("⚠️ Upload failed due to network error. Try again.")
                 except requests.exceptions.RequestException as e:
                     st.error(f"⚠️ Upload failed: {str(e)}")
 
+    render_footer()
