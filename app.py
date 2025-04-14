@@ -412,35 +412,41 @@ def compare_with_known_faces(unknown_img_path, model_name=MODEL_NAME, threshold=
             print(f"Error comparing with {filename}: {e}")
 
     return best_match
-
 # -------------------- PAGE 1: Face Recognition --------------------
 if page == "Face Recognition":
-    st.title("📸 ESP32-CAM Face Recognition")
+    st.markdown("<h1 style='text-align: center; color: #4CAF50;'>📸 Real-Time Face Recognition</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size: 18px;'>Tap below to check for the latest image from ESP32-CAM</p>", unsafe_allow_html=True)
 
-    if st.button("Check for New Image"):
+    if st.button("🔍 Detect Face", use_container_width=True):
         image_url = get_latest_image()
         if image_url:
-            st.image(image_url, caption="Captured Image", use_container_width=True)
-            response = requests.get(image_url)
-            with open("latest.jpg", "wb") as f:
-                f.write(response.content)
+            st.markdown("---")
+            st.markdown("### 🖼️ Captured Image:")
 
-            if is_face_detected("latest.jpg"):
-                match = compare_with_known_faces("latest.jpg")
-                if match:
-                    st.success(f"✅ Match found: {match}")
-                    tts = gTTS(f"Match found: {match}")
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                st.image(image_url, use_container_width=True)
+            with col2:
+                response = requests.get(image_url)
+                with open("latest.jpg", "wb") as f:
+                    f.write(response.content)
+
+                if is_face_detected("latest.jpg"):
+                    match = compare_with_known_faces("latest.jpg")
+                    if match:
+                        st.markdown(f"<h3 style='color: green;'>✅ Match Found: <span style='color: #2196F3;'>{match}</span></h3>", unsafe_allow_html=True)
+                        tts = gTTS(f"Match found. This is {match}")
+                    else:
+                        st.markdown("<h3 style='color: red;'>❌ No Match Found</h3>", unsafe_allow_html=True)
+                        tts = gTTS("No match found")
                 else:
-                    st.error("❌ No match found")
-                    tts = gTTS("No match found")
-            else:
-                st.warning("😕 No face detected in the captured image.")
-                tts = gTTS("No face detected")
+                    st.markdown("<h3 style='color: orange;'>😕 No Face Detected</h3>", unsafe_allow_html=True)
+                    tts = gTTS("No face detected")
 
-            tts.save("result.mp3")
-            st.audio("result.mp3", autoplay=True)
+                tts.save("result.mp3")
+                st.audio("result.mp3", autoplay=True)
         else:
-            st.warning("No image found on server.")
+            st.warning("⚠️ No image found on server. Please make sure ESP32-CAM has uploaded a photo.")
 
 # -------------------- PAGE 2: About Us --------------------
 elif page == "About Us":
