@@ -189,7 +189,7 @@ THRESHOLD = 0.4  # Lower = stricter match
 
 # Page Navigation
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Face Recognition", "Upload Known Face"])
+page = st.sidebar.radio("Go to", ["Face Recognition", "Upload Known Face", "View"])
 
 # Function to get latest image from ESP32 server
 def get_latest_image():
@@ -293,6 +293,23 @@ elif page == "Upload Known Face":
                 except requests.exceptions.RequestException as e:
                     st.error(f"⚠️ Upload failed: {str(e)}")
 
+# -------------------- PAGE 3: View Known Faces --------------------
+elif page == "View Known Faces":
+    st.title("View Known Faces from GitHub")
+
+    GITHUB_RAW_BASE_URL = "https://raw.githubusercontent.com/Bhandary1943/Second-Eye/main/known_faces"
+
+    try:
+        # List local known faces (assuming they mirror what's on GitHub)
+        known_faces = os.listdir(KNOWN_FOLDER)
+        if not known_faces:
+            st.warning("No known faces found in the local folder.")
+        else:
+            for filename in known_faces:
+                img_url = f"{GITHUB_RAW_BASE_URL}/{filename}"
+                st.image(img_url, caption=filename.split('.')[0], use_column_width=True)
+    except Exception as e:
+        st.error(f"⚠️ Could not load known faces: {str(e)}")
 
 
 
