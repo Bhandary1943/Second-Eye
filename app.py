@@ -297,20 +297,33 @@ elif page == "Upload Known Face":
 elif page == "View Known Faces":
     st.title("View Known Faces from GitHub")
 
+    import json
+
+    GITHUB_API_URL = "https://api.github.com/repos/Bhandary1943/Second-Eye/contents/known_faces"
     GITHUB_RAW_BASE_URL = "https://raw.githubusercontent.com/Bhandary1943/Second-Eye/main/known_faces"
 
-    try:
-        # List local known faces (assuming they mirror what's on GitHub)
-        known_faces = os.listdir(KNOWN_FOLDER)
-        if not known_faces:
-            st.warning("No known faces found in the local folder.")
-        else:
-            for filename in known_faces:
+    @st.cache_data
+    def fetch_known_faces():
+        try:
+            response = requests.get(GITHUB_API_URL)
+            if response.status_code == 200:
+                files = response.json()
+                return [file['name'] for file in files if file['name'].lower().endswith(('jpg', 'jpeg', 'png'))]
+            else:
+                return []
+        except:
+            return []
+
+    face_files = fetch_known_faces()
+
+    if not face_files:
+        st.warning("No known faces found in the GitHub repo.")
+    else:
+        cols = st.columns(3)
+        for i, filename in enumerate(face_files):
+            with cols[i % 3]:
                 img_url = f"{GITHUB_RAW_BASE_URL}/{filename}"
                 st.image(img_url, caption=filename.split('.')[0], use_column_width=True)
-    except Exception as e:
-        st.error(f"⚠️ Could not load known faces: {str(e)}")
-
 
 
 
