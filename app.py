@@ -293,39 +293,3 @@ elif page == "Upload Known Face":
                 except requests.exceptions.RequestException as e:
                     st.error(f"⚠️ Upload failed: {str(e)}")
 
-# -------------------- PAGE 3: View Known Faces --------------------
-elif page == "View Known Faces":
-    st.title("View Known Faces from GitHub")
-
-    import requests
-
-    GITHUB_API_URL = "https://api.github.com/repos/Bhandary1943/Second-Eye/contents/known_faces"
-
-    @st.cache_data
-    def fetch_known_faces_from_github():
-        try:
-            response = requests.get(GITHUB_API_URL)
-            if response.status_code == 200:
-                files = response.json()
-                # Only get image files and use their direct download URL
-                image_urls = [file['download_url'] for file in files if file['name'].lower().endswith(('jpg', 'jpeg', 'png'))]
-                return image_urls
-            else:
-                return []
-        except Exception as e:
-            print("Error:", e)
-            return []
-
-    image_urls = fetch_known_faces_from_github()
-
-    if not image_urls:
-        st.warning("No known faces found in the GitHub repo.")
-    else:
-        cols = st.columns(3)
-        for i, url in enumerate(image_urls):
-            with cols[i % 3]:
-                st.image(url, use_column_width=True)
-
-
-
-
