@@ -297,33 +297,35 @@ elif page == "Upload Known Face":
 elif page == "View Known Faces":
     st.title("View Known Faces from GitHub")
 
-    import json
+    import requests
 
     GITHUB_API_URL = "https://api.github.com/repos/Bhandary1943/Second-Eye/contents/known_faces"
-    GITHUB_RAW_BASE_URL = "https://raw.githubusercontent.com/Bhandary1943/Second-Eye/main/known_faces"
 
     @st.cache_data
-    def fetch_known_faces():
+    def fetch_known_faces_from_github():
         try:
             response = requests.get(GITHUB_API_URL)
             if response.status_code == 200:
                 files = response.json()
-                return [file['name'] for file in files if file['name'].lower().endswith(('jpg', 'jpeg', 'png'))]
+                # Only get image files and use their direct download URL
+                image_urls = [file['download_url'] for file in files if file['name'].lower().endswith(('jpg', 'jpeg', 'png'))]
+                return image_urls
             else:
                 return []
-        except:
+        except Exception as e:
+            print("Error:", e)
             return []
 
-    face_files = fetch_known_faces()
+    image_urls = fetch_known_faces_from_github()
 
-    if not face_files:
+    if not image_urls:
         st.warning("No known faces found in the GitHub repo.")
     else:
         cols = st.columns(3)
-        for i, filename in enumerate(face_files):
+        for i, url in enumerate(image_urls):
             with cols[i % 3]:
-                img_url = f"{GITHUB_RAW_BASE_URL}/{filename}"
-                st.image(img_url, caption=filename.split('.')[0], use_column_width=True)
+                st.image(url, use_column_width=True)
+
 
 
 
