@@ -189,7 +189,7 @@ THRESHOLD = 0.4  # Lower = stricter match
 
 # Page Navigation
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Face Recognition", "Upload Known Face", "View"])
+page = st.sidebar.radio("Go to", ["Face Recognition", "Upload Known Face"])
 
 # Function to get latest image from ESP32 server
 def get_latest_image():
